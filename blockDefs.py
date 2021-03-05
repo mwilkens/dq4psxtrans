@@ -74,6 +74,10 @@ class TextBlock:
         self.huff_d = 0
         self.huff_e = 0
         self.zero = 0
+
+        # Decoded Outputs of the TextBlock
+        self.huffTree = []
+        self.decText = {}
     
     def parseHeader(self, header):
         header = int.from_bytes(header,byteorder='little')
@@ -108,13 +112,10 @@ class TextBlock:
             self.d_a = byteSlice( body, self.huff_d, self.a_off, decode=False )
         
         # This is the actual huffman tree
-        self.huffTree = byteSlice( body, self.huff_e+10, self.huff_d, decode=False )
+        self.encHuffTree = byteSlice( body, self.huff_e+10, self.huff_d, decode=False )
         
-        if( self.uuid == 0x006C ):
-            tree = makeHuffTree( self.huffTree )
-            text = decodeHuffman( self.huff_c, self.encData, tree )
-            for line in text:
-                print( line )
+        self.hufftree = makeHuffTree( self.encHuffTree )
+        self.decText = decodeHuffman( self.huff_c, self.encData, tree )
     
     def printBlockInfo(self):
         print( "-- -- TEXTBLOCK #%08X: A(%08X) HB(%08X) HT(%08X) HE(%08X) Z(%08X)" % \
