@@ -113,7 +113,7 @@ ShiftJISLookup = {
 def decodeShiftJIS( sjis ):
     firstByte = "%X" % (sjis & 0xF)
     lastBytes = "%X" % (sjis & 0xFFF0)
-    if lastBytes in shiftJISLookup:
-        return shiftJISLookup[firstByte]
+    if lastBytes in ShiftJISLookup:
+        return ShiftJISLookup[lastBytes][firstByte]
     else:
         return ''

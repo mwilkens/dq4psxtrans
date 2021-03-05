@@ -1,5 +1,6 @@
 from itertools import count
 from helpers import *
+from huffman import *
 
 # Data Class for 2048 byte blocks
 class Block:
@@ -109,11 +110,13 @@ class TextBlock:
         # This is the actual huffman tree
         self.huffTree = byteSlice( body, self.huff_e+10, self.huff_d, decode=False )
         
-        if( len(self.encData) < 10):
+        if( self.uuid == 0x006C ):
             print("Huffman Bytes")
             printHex( self.encData )
             print("Huffman Tree")
             printHex( self.huffTree )
+            print("Decoded Huffman Tree")
+            makeHuffTree( self.huffTree )
     
     def printBlockInfo(self):
         print( "-- -- TEXTBLOCK #%08X: A(%08X) HB(%08X) HT(%08X) HE(%08X) Z(%08X)" % \
