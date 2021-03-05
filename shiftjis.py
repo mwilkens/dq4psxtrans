@@ -29,5 +29,6 @@ def decodeShiftJIS( sjis ):
         i_off = int( prevOffset, 16 )
         if( byte-i_off < len(ShiftJISLookup[base][prevOffset])):
           return ShiftJISLookup[base][prevOffset][byte - i_off]
-    print( "Ignored Byte: %s%02x" % (base,byte))
+    # TODO: Figure out why there's so many 0xFExx and 0x81Fx characters
+    # print( "Ignored Byte: %s%02x" % (base,byte))
     return ''

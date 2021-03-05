@@ -115,7 +115,7 @@ class TextBlock:
         self.encHuffTree = byteSlice( body, self.huff_e+10, self.huff_d, decode=False )
         
         self.hufftree = makeHuffTree( self.encHuffTree )
-        self.decText = decodeHuffman( self.huff_c, self.encData, tree )
+        self.decText = decodeHuffman( self.huff_c, self.encData, self.hufftree )
     
     def printBlockInfo(self):
         print( "-- -- TEXTBLOCK #%08X: A(%08X) HB(%08X) HT(%08X) HE(%08X) Z(%08X)" % \

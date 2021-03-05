@@ -10,7 +10,7 @@ Progess:
 * [DONE] Parse Text SubBlocks
 * [DONE] Extract Text Huffman Coding Data
 * [DONE] Decode Huffman Encoded Text
-* Extract Japanese Script from File
+* [DONE] Extract Japanese Script from File
 * ... TBD
 
 This effort is based on the work of Markus Schroeder, I hardly take credit for this, I just love Dragon Quest and want to see this game translated.

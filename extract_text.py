@@ -1,5 +1,6 @@
 # Script for Working With DQ4 Data
 from blockDefs import *
+import io
 
 with open("HBD1PS1D.Q41", "rb") as dq4b:
 
@@ -47,7 +48,19 @@ with open("HBD1PS1D.Q41", "rb") as dq4b:
                 dq4b.seek(-24,1)
                 tbBody = dq4b.read( sb.compLength )
                 tb.parseBody( tbBody )
-                # printHex(tbBody)
+
+                validDialog = False
+                for line in tb.decText:
+                    if "ダミー{7f0b}{0000}" in line["text"] or line["text"] == "{0000}":
+                        ''' bad sign if dialog is only these '''
+                    else:
+                        validDialog = True
+
+                if validDialog:
+                    with io.open( './jdialog/%04X.csv' % tb.uuid, mode="w", encoding="utf-8") as dcsv:
+                        for line in tb.decText:
+                            dcsv.write( "\"\"," + ",".join(line.values()) + "\n")
+
                 dataLeft -= ( sb.compLength )
             else:
                 # For now we ignore every subblock that's not a text block
