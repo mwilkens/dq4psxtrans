@@ -9,7 +9,7 @@ Progess:
 * [DONE] Parse Data File SubBlocks
 * [DONE] Parse Text SubBlocks
 * [DONE] Extract Text Huffman Coding Data
-* Decode Huffman Encoded Text
+* [DONE] Decode Huffman Encoded Text
 * Extract Japanese Script from File
 * ... TBD
 
