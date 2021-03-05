@@ -112,7 +112,7 @@ class TextBlock:
         
         if( self.uuid == 0x006C ):
             tree = makeHuffTree( self.huffTree )
-            text = decodeHuffman( self.encData, tree )
+            text = decodeHuffman( self.huff_c, self.encData, tree )
             for line in text:
                 print( line )
     

@@ -39,11 +39,12 @@ def makeHuffTree( rawHuff ):
 
     return root
 
-def decodeHuffman( code, huff ):
+def decodeHuffman( offset, code, huff ):
     dText = ""
     dialog = []
     tempTree = huff
-    offset = 0
+    byte_idx = 0
+    start = offset
     for byte in code:
         # Count down from the end
         for i in range(8):
@@ -55,10 +56,11 @@ def decodeHuffman( code, huff ):
             else:
                 dText = ''.join([dText,tempTree[code]])
                 if( tempTree[code] == '{0000}' ):
-                    dialog.append( {'text':dText,'offset':'0x%04X' % offset} ) 
+                    dialog.append( {'text':dText,'offset':'0x%04X' % start} ) 
                     dText = ""
+                    start = byte_idx + offset
                 tempTree = huff
-        offset += 1
+        byte_idx += 1
     return dialog
 
 
