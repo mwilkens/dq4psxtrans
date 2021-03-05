@@ -19,6 +19,9 @@ Progess:
 * Write ASM Generator for Pointer Redirection
 * Write Binary Patcher for SLPM_869.16
 * Actually patch all the dialog in DQ4 :)
+* Write DQ LZS Algorithm
+* Extract all TIM Files
+* Write Patcher for TIM Files 
 * Figure out where every other bit of dialog is
 * ... TBD
 * Make a cute intro
