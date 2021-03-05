@@ -11,7 +11,17 @@ Progess:
 * [DONE] Extract Text Huffman Coding Data
 * [DONE] Decode Huffman Encoded Text
 * [DONE] Extract Japanese Script from File
+* Convert Android English Text to Correct Format
+* Map Android Textblock UUIDs to PSX Textblock UUIDs
+* Write Huffman Encode Functionality
+* Write Textblock Modification Functionality
+* Calculate Pointer Mod Values
+* Write ASM Generator for Pointer Redirection
+* Write Binary Patcher for SLPM_869.16
+* Actually patch all the dialog in DQ4 :)
+* Figure out where every other bit of dialog is
 * ... TBD
+* Make a cute intro
 
 This effort is based on the work of Markus Schroeder, I hardly take credit for this, I just love Dragon Quest and want to see this game translated.
 
