@@ -14,11 +14,9 @@ def parseTree( switch, offset, curNode, bytes):
         temp[1] = parseTree( 1, offset, node, bytes)
         return temp
     elif( hByte == 0x7F ):
-        if( lByte == 0x02 ):
-            return '\n'
         return "{%02x%02x}" % (hByte, lByte)
     elif(hByte == 0 and lByte == 0):
-        return "null"
+        return "{0000}"
     else:
         hByte += 0x80
         encLetter = (hByte << 8) + lByte
@@ -43,7 +41,9 @@ def makeHuffTree( rawHuff ):
 
 def decodeHuffman( code, huff ):
     dText = ""
+    dialog = []
     tempTree = huff
+    offset = 0
     for byte in code:
         # Count down from the end
         for i in range(8):
@@ -53,9 +53,13 @@ def decodeHuffman( code, huff ):
             if( type(tempTree[code]) == list ):
                 tempTree = tempTree[code]
             else:
-                dText += tempTree[code]
+                dText = ''.join([dText,tempTree[code]])
+                if( tempTree[code] == '{0000}' ):
+                    dialog.append( {'text':dText,'offset':'0x%04X' % offset} ) 
+                    dText = ""
                 tempTree = huff
-    return dText
+        offset += 1
+    return dialog
 
 
 '''

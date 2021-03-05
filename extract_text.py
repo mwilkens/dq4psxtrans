@@ -3,6 +3,8 @@ from blockDefs import *
 
 with open("HBD1PS1D.Q41", "rb") as dq4b:
 
+    print("== STARTING EXTRACTION ==")
+
     # Seek to the beginning of the block data
     dq4b.seek(0x800)
 

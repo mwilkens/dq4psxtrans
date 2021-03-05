@@ -113,7 +113,8 @@ class TextBlock:
         if( self.uuid == 0x006C ):
             tree = makeHuffTree( self.huffTree )
             text = decodeHuffman( self.encData, tree )
-            print(text)
+            for line in text:
+                print( line )
     
     def printBlockInfo(self):
         print( "-- -- TEXTBLOCK #%08X: A(%08X) HB(%08X) HT(%08X) HE(%08X) Z(%08X)" % \

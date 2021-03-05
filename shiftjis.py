@@ -19,11 +19,15 @@ def decodeShiftJIS( sjis ):
     if ShiftJISLookup == {}:
       loadShiftJIS( 'kanji_codes.sjis.txt' )
     byte = sjis & 0xFF
-    base = "%X" % ((sjis & 0xFF00) >> 8)
+    base = "%x" % ((sjis & 0xFF00) >> 8)
     if base in ShiftJISLookup:
         for offset in ShiftJISLookup[base]:
           i_off = int(offset, 16)
-          if byte > i_off:
-            if( byte-i_off+1 < len(ShiftJISLookup[base][offset])):
-              return ShiftJISLookup[base][offset][byte - i_off]
+          if byte >= i_off:
+            prevOffset = offset
+        # No more offsets to parse
+        i_off = int( prevOffset, 16 )
+        if( byte-i_off < len(ShiftJISLookup[base][prevOffset])):
+          return ShiftJISLookup[base][prevOffset][byte - i_off]
+    print( "Ignored Byte: %s%02x" % (base,byte))
     return ''
