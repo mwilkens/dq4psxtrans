@@ -11,12 +11,12 @@ My goal here is to get at least an accessible foundation for translation started
 * [DONE] Extract Text Huffman Coding Data
 * [DONE] Decode Huffman Encoded Text
 * [DONE] Extract Japanese Script from File
-* Convert Android English Text to Correct Format
-* Map Android Textblock UUIDs to PSX Textblock UUIDs
+* [DONE] Convert Android English Text to Correct Format
+* [WIP] Create script that guesses translation based on text similarity
 * Write Huffman Encode Functionality
 * Write Textblock Modification Functionality
 * Calculate Pointer Mod Values
-* Write ASM Generator for Pointer Redirection
+* [WIP] Write ASM Generator for Pointer Redirection
 * Write Binary Patcher for SLPM_869.16
 * Actually patch all the dialog in DQ4 :)
 * Write DQ LZS Algorithm
@@ -40,10 +40,7 @@ In hex these are:
 
 The value `%a` actually represents the start of a name, so it can also be seen in dialog. The name is referenced by ID. An example of dialog referencing the hero is below.
 
-`*: What's the matter, %a00090?`
- `Have you had enough?`
-
-For linebreaks, the dialog uses hex `0A`. This doesn't break the line of dialog.
+`*: What's the matter, %a00090?\nHave you had enough?`
 
 The Japanese files end with `@c0@`, `@c1@`, `@c2@` or `@c3@`. Not sure why. The name is also prefixed by a zero-padded 4 digit decimal i.e. `@a0001  王@b` (王 means King).
 
