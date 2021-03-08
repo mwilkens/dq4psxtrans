@@ -10,6 +10,7 @@ dialogMap = {
 }
 
 # Searches a binary file for next instance of a certain text/hex/etc
+'''
 def seekText( fh, text ):
     length = len(text)
     found_text = False
@@ -18,10 +19,27 @@ def seekText( fh, text ):
         if( len(search) != length ):
             return -1
         fh.seek(-(length-1),1)
-        if( search == text):
+        if( text in search):
             fh.seek(-1,1)
             found_text = True
             return fh.tell()
+'''
+
+def seekText( fh, text ):
+    found_text = False
+    startPtr = fh.tell()
+    offset = 0
+    while not found_text:
+        start = fh.tell()
+        chunk = fh.read(512)
+        if start == fh.tell():
+            return -1
+        ptr = chunk.find(text)
+        if ptr != -1:
+            fh.seek( startPtr )
+            return startPtr + ptr + offset
+        offset += 512
+
 
 # We'll cache the files just to speed things up a tad
 fileCache = {}
@@ -39,7 +57,7 @@ def readMPTFile( file ):
         headerOffset = seekText( mptDialog, b'@a' )
         if headerOffset == -1:
             return -1
-        mptDialog.seek(headerOffset)
+        mptDialog.seek(headerOffset + 2)
         
         dId = 0
         while True:
@@ -58,7 +76,8 @@ def readMPTFile( file ):
             # Seek end of dialog
             dialogEnd = seekText( mptDialog, b'@c' )
             mptDialog.seek(nameEnd+2)
-            dialog = mptDialog.read(dialogEnd - nameEnd-2)
+            dialog = mptDialog.read((dialogEnd - nameEnd) - 2)
+            mptDialog.seek(2,1)
 
             finalDialog = dialog.decode('utf-8')
             for key in dialogMap:
@@ -93,7 +112,7 @@ _, _, mptFiles = next(walk('./assets/msg/ja')) # will be identical for en
 _, _, csvFiles = next(walk('./jdialog'))
 
 # Lets start by just translating one dialog for now.
-csvDialog = readCSVFile( './jdialog/006C.csv' )
+csvDialog = readCSVFile( './jdialog/00A8.csv' )
 
 # Translate each line in the PSX Dialog
 for csvLine in csvDialog:
@@ -101,12 +120,12 @@ for csvLine in csvDialog:
     bestSim = 0
     bestTransId = 0
     bestTransFile = ''
-    for dialog in mptFiles:
+    bestTransLine = ''
+    for mptDialog in mptFiles:
         # Get Japanese and English Scripts
-        mptjScript = readMPTFile( './assets/msg/ja/' + dialog )
+        mptjScript = readMPTFile( './assets/msg/ja/' + mptDialog )
 
         if mptjScript == -1:
-            print( "File Broke: ", dialog )
             continue
 
         # Read each line of Japanese script
@@ -116,7 +135,8 @@ for csvLine in csvDialog:
             
             if sim > bestSim:
                 bestTransId = mptLine['id']
-                bestTransFile = dialog
+                bestTransFile = mptDialog
+                bestTransLine = mptLine['line']
                 bestSim = sim
 
             if bestSim > 0.9:
@@ -132,7 +152,8 @@ for csvLine in csvDialog:
             trans = engLine['line']
 
     print( "Line:\n%s" % csvLine['line'] )
-    print( "Translated (Confidence: %0.2f%%):\n%s" % (sim*100, trans) )
+    print( "Matched Line:\n%s" % bestTransLine )
+    print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (bestTransFile, sim*100, trans) )
 
 '''
 String similarity:
