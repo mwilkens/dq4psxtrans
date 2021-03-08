@@ -44,6 +44,36 @@ The value `%a` actually represents the start of a name, so it can also be seen i
 
 The Japanese files end with `@c0@`, `@c1@`, `@c2@` or `@c3@`. Not sure why. The name is also prefixed by a zero-padded 4 digit decimal i.e. `@a0001  王@b` (王 means King).
 
+## Auto Translation
+
+The auto-translator works fairly well as of right now. It can very accurately match dialog but the PSX dialog comes in bigger chunks than the Android dialog, so occasionally some portions of the dialog go unmatched. Additionally some control characters are lost in translation. Below is an example of both the performance and the shortcomings mentioned above.
+
+```
+Line:
+デスピサロ……不吉な名前じゃ。{7f0b}{0000}
+Matched Line:
+デスピサロ……不吉な名前じゃ。{0000}
+Translated from b0016000.mpt (Confidence: 19.28%):
+*: Psaro the Manslayer... The name alone gives me the willies.{0000}
++====================================+
+Line:
+王様と　姫さまは　{7f02}すでに　お休みでございます。{7f0b}{0000}
+Matched Line:
+王様と　姫さまは{7f02}すでに　お休みでございます。{0000}
+Translated from b0016000.mpt (Confidence: 90.67%):
+*: King Norman and Princess Veronica have already retired to their chambers.{0000}
++====================================+
+Line:
+お父さまが　みなに{7f02}約束をしたため　私は優勝者と{7f02}結婚しなくてはなりません。{7f0a}{7f02}でも　 
+もし優勝者が{7f02}女の人だったら　私は　無理な{7f02}結婚をしなくても　すむでしょう。{7f0a}{7f02}お願い 
+でございます。{7f02}どうか　武術大会に{7f02}出てくださいまし！{7f0a}{7f02}アリーナ姫さま。{7f02}私は　 
+自由に生きている{7f02}あなたを　うらやましく思いますわ。　{7f0b}{0000}
+Matched Line:
+でも　もし優勝者が{7f02}女の人だったら　私は　無理な{7f02}結婚をしなくても　すむでしょう。{0000}       
+Translated from b0016000.mpt (Confidence: 5.48%):
+But if the winner were a woman, then the whole thing would surely have to be called off.{0000}
+```
+
 ## Credits
 
 This effort is based on the work of Markus Schroeder, I hardly take credit for this, I just love Dragon Quest and want to see this game translated.

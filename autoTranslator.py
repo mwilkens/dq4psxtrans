@@ -6,7 +6,9 @@ from os import walk
 dialogMap = {
     '\n\t': '{7f02}',
     '\n': '{0000}', # might be dangerous
-    r'%a00090': '{7f1f}'
+    r'%a00090': '{7f1f}',
+    '＊「': '',
+    'アリーナ': '{7f21}' # Not sure about this one but I've seen it
 }
 
 # Searches a binary file for next instance of a certain text/hex/etc
@@ -112,7 +114,7 @@ _, _, mptFiles = next(walk('./assets/msg/ja')) # will be identical for en
 _, _, csvFiles = next(walk('./jdialog'))
 
 # Lets start by just translating one dialog for now.
-csvDialog = readCSVFile( './jdialog/00A8.csv' )
+csvDialog = readCSVFile( './jdialog/01B8.csv' )
 
 # Translate each line in the PSX Dialog
 for csvLine in csvDialog:
@@ -154,6 +156,7 @@ for csvLine in csvDialog:
     print( "Line:\n%s" % csvLine['line'] )
     print( "Matched Line:\n%s" % bestTransLine )
     print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (bestTransFile, sim*100, trans) )
+    print( "+====================================+")
 
 '''
 String similarity:
