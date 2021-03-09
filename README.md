@@ -84,13 +84,17 @@ Name Table
 | ---- | ------------ | ----- |
 | ライアン | 7f20 | |
 | アリーナ | 7f21 | Occasionally not translated in PSX | 
-| クリフト | 7f22 |
-| ブライ | 7f23 |
+| クリフト | 7f22 | |
+| ブライ | 7f23 | |
 | トルネコ | 7f24 |
-| ミネア | 7f25 |
+| ミネア | 7f25 | |
 | マーニャ | 7f26 |
-| パノン | 7f2e |
-| ピサロ | 7f31 | Mostly seen as デス{7f31} i.e. adding Necro- to saro
+| ホフマン | 7f2d | ホフマン is 7f2d but 7f2d is not always ホフマン |
+| パノン | 7f2e | |
+| ピサロ | 7f31 | Mostly seen as デス{7f31} i.e. adding Necro- to saro |
+| トム | N/A | |
+| ドン・ガアデ | N/A | |
+| シンシア | N/A | |
 
 ### Conditional Dialog in the Android English Script
 
@@ -107,6 +111,28 @@ Putting this all together gives us a generic formula like so:
 And an example from the script:
 
 `%A120%XStill, if she were a boy—%Z%B120%XStill, if you were a boy—%Z`
+
+Occasionally for plurals, there will be code like this:
+
+`%H{ID}%X%Ys%Z`
+
+where `ID` is some kind of relevant variable. e.g.
+
+`Torneko receives %a00530 gold coin%H530%X%Ys%Z.`
+
+Best guess is that the `%H` operator checks if something is greater than 1.
+
+### Other Control Codes
+
+| Control Code | Android Code | Best Guess |
+| ------------ | ------------ | ---------- |
+| 7f17 | %a00100 | Some kind of relevant item |
+| 7f15 | %a00750 or %a00620 or %a00530 | Gold amount for item, probably not consistent in Android |
+| 7f43 | N/A | Used for emphasis, needs testing. |
+
+### Special Files
+
+* 0020.csv seems to be mostly names.
 
 ### TO-DOs for the Auto-Translator
 * [DONE] Replace names in beginning of dialog
