@@ -46,32 +46,33 @@ The Japanese files end with `@c0@`, `@c1@`, `@c2@` or `@c3@`. Not sure why. The 
 
 ## Auto Translation
 
-The auto-translator works fairly well as of right now. It can very accurately match dialog but the PSX dialog comes in bigger chunks than the Android dialog, so occasionally some portions of the dialog go unmatched. Additionally some control characters are lost in translation. Below is an example of both the performance and the shortcomings mentioned above.
+The auto-translator works really well. As can be seen below, the dialog is matched near perfectly for the most part. The big issue is the English dialog is not formatted the same way as the Japanese dialog which is incredibly annoying.
 
 ```
 Line:
-デスピサロ……不吉な名前じゃ。{7f0b}{0000}
+{7f04}{7f25}「夢というのは　人の思いが{7f02}眠っている人の意識に{7f02}入りこんでくるものだと言います。{7f0a}{7f02}{7f04}{7f25}「そのおかしな夢というのも{7f02}もしかして　だれかの強い思いが{7f02}影響してるのかもしれませんね。{0000}        
 Matched Line:
-デスピサロ……不吉な名前じゃ。{0000}
-Translated from b0016000.mpt (Confidence: 19.28%):
-*: Psaro the Manslayer... The name alone gives me the willies.{0000}
+{7f04}{7f25}「夢というのは　人の思いが{7f02}眠っている人の意識に{7f02}入りこんでくるものだと言います。{7f0a}{7f02}{7f04}{7f25}「そのおかしな夢というのも{7f02}もしかして　だれかの強い思いが{7f02}影響してるのかもしれませんね。
+Translated from b0532000.mpt (Confidence: 99.60%):
+In dreams, the ideas and thoughts of others are entering the consciousness of those sleeping.{7f0a}{7f02}If people are 
+having strange dreams, it may mean some powerful force is casting a shadow over their hearts...{0000}
 +====================================+
+
 Line:
-王様と　姫さまは　{7f02}すでに　お休みでございます。{7f0b}{0000}
+{7f04}{7f24}「私　夢って{7f02}あんまり　見ないんですよ。{7f02}眠りが　深いのでしょうかな？{0000}
 Matched Line:
-王様と　姫さまは{7f02}すでに　お休みでございます。{0000}
-Translated from b0016000.mpt (Confidence: 90.67%):
-*: King Norman and Princess Veronica have already retired to their chambers.{0000}
+{7f04}{7f24}「私　夢って　{7f02}あんまり　見ないんですよ。{7f02}眠りが　深いのでしょうかな？
+Translated from b0532000.mpt (Confidence: 98.25%):
+I never remember me dreams, so I don't. Maybe it's 'cause I'm fast asleep...{0000}
 +====================================+
+
 Line:
-お父さまが　みなに{7f02}約束をしたため　私は優勝者と{7f02}結婚しなくてはなりません。{7f0a}{7f02}でも　 
-もし優勝者が{7f02}女の人だったら　私は　無理な{7f02}結婚をしなくても　すむでしょう。{7f0a}{7f02}お願い 
-でございます。{7f02}どうか　武術大会に{7f02}出てくださいまし！{7f0a}{7f02}アリーナ姫さま。{7f02}私は　 
-自由に生きている{7f02}あなたを　うらやましく思いますわ。　{7f0b}{0000}
+{7f04}{7f23}「まったく　夢ごときで{7f02}大さわぎになるとは{7f02}平和な村ですな。{0000}
 Matched Line:
-でも　もし優勝者が{7f02}女の人だったら　私は　無理な{7f02}結婚をしなくても　すむでしょう。{0000}       
-Translated from b0016000.mpt (Confidence: 5.48%):
-But if the winner were a woman, then the whole thing would surely have to be called off.{0000}
+{7f04}{7f23}「まったく　夢ごときで{7f02}大さわぎになるとは{7f02}平和な村ですな。
+Translated from b0533000.mpt (Confidence: 99.03%):
+So main concern of populace is dream? Truly this is peaceful town...{0000}
++====================================+
 ```
 
 ### Names and their Mappings in the PSX Script
@@ -108,7 +109,8 @@ And an example from the script:
 `%A120%XStill, if she were a boy—%Z%B120%XStill, if you were a boy—%Z`
 
 ### TO-DOs for the Auto-Translator
-* Somehow replace names in beginning of dialog
+* [DONE] Replace names in beginning of dialog
+* Add names at the beginning of English matched dialog
 * Get rid of conditional lines
 * Figure out maximum number of characters per line
 * Auto-place {7f02}s in appropriate places if translated lines are too long.
