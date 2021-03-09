@@ -5,28 +5,30 @@ from os import walk
 # Dialog format mapping
 dialogMap = {
     '\n\t': '{7f02}',
-    '\n': '{0000}', # might be dangerous
+    '\n': '',
+    '%0': '', # Denotes something but idc
     r'%a00090': '{7f1f}',
+    r'%a00120': '{7f02}{7f4b}', # yeah I don't know
     '＊「': '',
-    'アリーナ': '{7f21}' # Not sure about this one but I've seen it
+    '*: ': '',
+}
+
+# Names to control characters
+nameMap = {
+    'ライアン': '{7f20}',
+    'アリーナ': '{7f21}', # Alena 
+    'ブライ': '{7f23}',  # Brey / Borya
+    'クリフト': '{7f22}', # Cristo / Kiryl
+    'ブライ': '{7f23}',
+    'トルネコ': '{7f24}',
+    'ミネア': '{7f25}',
+    'マーニャ': '{7f26}',
+    'パノン': '{7f2e}',
+    'ピサロ': '{7f31}', # Saro
+    'ロザリー': '{7f32}',
 }
 
 # Searches a binary file for next instance of a certain text/hex/etc
-'''
-def seekText( fh, text ):
-    length = len(text)
-    found_text = False
-    while not found_text:
-        search = fh.read(length)
-        if( len(search) != length ):
-            return -1
-        fh.seek(-(length-1),1)
-        if( text in search):
-            fh.seek(-1,1)
-            found_text = True
-            return fh.tell()
-'''
-
 def seekText( fh, text ):
     found_text = False
     startPtr = fh.tell()
@@ -82,8 +84,18 @@ def readMPTFile( file ):
             mptDialog.seek(2,1)
 
             finalDialog = dialog.decode('utf-8')
+
+            # replace the formatting / clear junk
             for key in dialogMap:
                 finalDialog = finalDialog.replace( key, dialogMap[key] )
+            
+            # replace the speaker's names with their control bytes
+            for name in nameMap:
+                finalDialog = finalDialog.replace( name + "「", "{7f04}" + nameMap[name] + '「' )
+            
+            # Now we can replace all other instances of the name with the plain control byte
+            for name in nameMap:
+                finalDialog = finalDialog.replace( name, nameMap[name] )
 
             dialogObj['line'] = finalDialog
             dialogObj['length'] = len(dialog)
@@ -114,58 +126,88 @@ _, _, mptFiles = next(walk('./assets/msg/ja')) # will be identical for en
 _, _, csvFiles = next(walk('./jdialog'))
 
 # Lets start by just translating one dialog for now.
-csvDialog = readCSVFile( './jdialog/01B8.csv' )
+csvDialog = readCSVFile( './jdialog/02C5.csv' )
 
 # Translate each line in the PSX Dialog
 for csvLine in csvDialog:
-    # Similarity Tracker
-    bestSim = 0
-    bestTransId = 0
-    bestTransFile = ''
-    bestTransLine = ''
-    for mptDialog in mptFiles:
-        # Get Japanese and English Scripts
-        mptjScript = readMPTFile( './assets/msg/ja/' + mptDialog )
+    
+    # PSX lines are sometimes packaged with these two controls
+    # We can split the dialog, translate then repackage.
+    # Also get rid of the end character, cos we add it back later
+    psxLines = csvLine['line'].strip('{0000}').split('{7f0a}{7f02}')
+    transLines = []
+    avgConfidence = 0
 
-        if mptjScript == -1:
-            continue
+    curLine = 0
+    for psxLine in psxLines:
 
-        # Read each line of Japanese script
-        for mptLine in mptjScript:
-            # Calculate the similarity
-            sim = SequenceMatcher(None, mptLine['line'], csvLine['line']).ratio()
-            
-            if sim > bestSim:
-                bestTransId = mptLine['id']
-                bestTransFile = mptDialog
-                bestTransLine = mptLine['line']
-                bestSim = sim
+        # Similarity Tracker
+        bestSim = 0
+        bestTransId = 0
+        bestTransFile = ''
+        bestTransLine = ''
 
+        # If we've found the file the dialog contains, lets limit our search to that file
+        if bestTransFile != '':
+            searchFiles = [bestTransFile]
+        else:
+            searchFiles = mptFiles
+
+        for mptDialog in searchFiles:
+            # Get Japanese and English Scripts
+            mptjScript = readMPTFile( './assets/msg/ja/' + mptDialog )
+
+            if mptjScript == -1:
+                continue
+
+            # Read each line of Japanese script
+            for mptLine in mptjScript:
+                # Calculate the similarity
+                sim = SequenceMatcher(None, mptLine['line'], psxLine).ratio()
+                
+                if sim > bestSim:
+                    bestTransId = mptLine['id']
+                    bestTransFile = mptDialog
+                    bestTransLine = mptLine['line']
+                    bestSim = sim
+
+                if bestSim > 0.9:
+                    break
             if bestSim > 0.9:
                 break
-        if bestSim > 0.9:
-            break
+
+        if avgConfidence == 0:
+            avgConfidence += sim
+        else:
+            avgConfidence = (sim + avgConfidence)/2
+
+        transLines.append( bestTransId )
+        curLine += 1
 
     # Find the appropriate translated line
     trans = ''
     mpteScript = readMPTFile( './assets/msg/en/' + bestTransFile )
-    for engLine in mpteScript:
-        if engLine['id'] == bestTransId:
-            trans = engLine['line']
+    for lineId in transLines:
+        for engLine in mpteScript:
+            if engLine['id'] == lineId:
+                if trans != '':
+                    trans = trans + '{7f0a}{7f02}' + engLine['line']
+                else:
+                    trans = engLine['line']
+    trans += '{0000}'
+
+    # Unnecessary but useful for debugging
+    mptjScript = readMPTFile( './assets/msg/ja/' + bestTransFile )
+    fullMatch = ''
+    for lineId in transLines:
+        for jaLine in mptjScript:
+            if jaLine['id'] == lineId:
+                if fullMatch != '':
+                    fullMatch = fullMatch + '{7f0a}{7f02}' + jaLine['line']
+                else:
+                    fullMatch = jaLine['line']
 
     print( "Line:\n%s" % csvLine['line'] )
-    print( "Matched Line:\n%s" % bestTransLine )
-    print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (bestTransFile, sim*100, trans) )
-    print( "+====================================+")
-
-'''
-String similarity:
-https://stackoverflow.com/questions/17388213/find-the-similarity-metric-between-two-strings
-
-Should filter all characters that aren't Katakana/Hirigana
-then measure similarity
-
-Determine structure of Android dialog and convert it to new structure.
-
-
-'''
+    print( "Matched Line:\n%s" % fullMatch )
+    print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (bestTransFile, avgConfidence*100, trans) )
+    print( "+====================================+\n")

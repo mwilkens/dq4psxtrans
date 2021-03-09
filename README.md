@@ -74,6 +74,45 @@ Translated from b0016000.mpt (Confidence: 5.48%):
 But if the winner were a woman, then the whole thing would surely have to be called off.{0000}
 ```
 
+### Names and their Mappings in the PSX Script
+
+`{7f04}{7fXX}` comes at the beginning of each named dialog. Below is a list of names I've figured out.
+
+Name Table
+| Name | Control Code | Notes |
+| ---- | ------------ | ----- |
+| ライアン | 7f20 | |
+| アリーナ | 7f21 | Occasionally not translated in PSX | 
+| クリフト | 7f22 |
+| ブライ | 7f23 |
+| トルネコ | 7f24 |
+| ミネア | 7f25 |
+| マーニャ | 7f26 |
+| パノン | 7f2e |
+| ピサロ | 7f31 | Mostly seen as デス{7f31} i.e. adding Necro- to saro
+
+### Conditional Dialog in the Android English Script
+
+In the Android english dialog there are a few places where there are control statements which display different text depending on which character you control. I'm generally not sure which to choose because I haven't played the game but the structure is as follows:
+
+`%A, %B` - Basically a reverse if/else for names. An ID follows, i.e. `%A120` would mean "if you AREN'T Alena (アリーナ)". After the text in the example would be the "else" statement, with the same ID, i.e. `%B120`
+
+`%X` begins a conditional text block and it is ended by `%Z`.
+
+Putting this all together gives us a generic formula like so:
+
+`%A{ID}%X{TEXT if not ID}%Z%B{ID}%X{TEXT if ID}%Z`
+
+And an example from the script:
+
+`%A120%XStill, if she were a boy—%Z%B120%XStill, if you were a boy—%Z`
+
+### TO-DOs for the Auto-Translator
+* Somehow replace names in beginning of dialog
+* Get rid of conditional lines
+* Figure out maximum number of characters per line
+* Auto-place {7f02}s in appropriate places if translated lines are too long.
+
 ## Credits
 
 This effort is based on the work of Markus Schroeder, I hardly take credit for this, I just love Dragon Quest and want to see this game translated.
