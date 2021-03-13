@@ -28,6 +28,8 @@ nameMap = {
     'ロザリー': '{7f32}',
 }
 
+controlChars = ['{0000}','{7f02}','{7f0a}','{7f0b}','{7f1f}']
+
 # Searches a binary file for next instance of a certain text/hex/etc
 def seekText( fh, text ):
     found_text = False
@@ -49,7 +51,7 @@ def seekText( fh, text ):
 fileCache = {}
 
 # Read an .MPT file and return a list of lines
-def readMPTFile( file ):
+def readMPTFile( file, condition=False ):
     script = []
     if file in fileCache:
         return fileCache[file]
@@ -85,17 +87,18 @@ def readMPTFile( file ):
 
             finalDialog = dialog.decode('utf-8')
 
-            # replace the formatting / clear junk
-            for key in dialogMap:
-                finalDialog = finalDialog.replace( key, dialogMap[key] )
-            
-            # replace the speaker's names with their control bytes
-            for name in nameMap:
-                finalDialog = finalDialog.replace( name + "「", "{7f04}" + nameMap[name] + '「' )
-            
-            # Now we can replace all other instances of the name with the plain control byte
-            for name in nameMap:
-                finalDialog = finalDialog.replace( name, nameMap[name] )
+            if condition:
+                # replace the formatting / clear junk
+                for key in dialogMap:
+                    finalDialog = finalDialog.replace( key, dialogMap[key] )
+                
+                # replace the speaker's names with their control bytes
+                for name in nameMap:
+                    finalDialog = finalDialog.replace( name + "「", "{7f04}" + nameMap[name] + '「' )
+                
+                # Now we can replace all other instances of the name with the plain control byte
+                for name in nameMap:
+                    finalDialog = finalDialog.replace( name, nameMap[name] )
 
             dialogObj['line'] = finalDialog
             dialogObj['length'] = len(dialog)
@@ -115,6 +118,7 @@ def readCSVFile( file ):
             dialogObj = {}
             line = line.decode('utf-8').split(',')
             dialogObj['line'] = line[1]
+
             dialogObj['length'] = len(line[1])
             dialogObj['name'] = ''
             script.append(dialogObj)
@@ -129,7 +133,7 @@ totalLines = 0
 poorMatches = 0
 noMatches = 0
 
-for csvFile in csvFiles:
+for csvFile in csvFiles[10:]:
     print( "\n+=======================+\n!!SCANNING %s !!\n+=======================+\n" % csvFile)
     # Lets start by just translating one dialog for now.
     csvDialog = readCSVFile( './jdialog/' + csvFile )
@@ -155,7 +159,6 @@ for csvFile in csvFiles:
             bestSim = 0
             bestTransId = 0
             bestTransFile = ''
-            bestTransLine = ''
 
             # If we've found the file the dialog contains, lets limit our search to that file
             if bestTransFile != '':
@@ -165,7 +168,7 @@ for csvFile in csvFiles:
 
             for mptDialog in searchFiles:
                 # Get Japanese and English Scripts
-                mptjScript = readMPTFile( './assets/msg/ja/' + mptDialog )
+                mptjScript = readMPTFile( './assets/msg/ja/' + mptDialog, condition=True )
 
                 if mptjScript == -1:
                     continue
@@ -181,7 +184,6 @@ for csvFile in csvFiles:
                     if sim > bestSim:
                         bestTransId = mptLine['id']
                         bestTransFile = mptDialog
-                        bestTransLine = mptLine['line']
                         bestSim = sim
 
                     if bestSim > 0.9:
@@ -204,10 +206,9 @@ for csvFile in csvFiles:
             for engLine in mpteScript:
                 if engLine['id'] == lineId:
                     if trans != '':
-                        trans = trans + '{7f0a}{7f02}' + engLine['line']
+                        trans = trans + '\n' + engLine['line']
                     else:
                         trans = engLine['line']
-        trans += '{0000}'
 
         # Unnecessary but useful for debugging
         mptjScript = readMPTFile( './assets/msg/ja/' + bestTransFile )
@@ -216,12 +217,12 @@ for csvFile in csvFiles:
             for jaLine in mptjScript:
                 if jaLine['id'] == lineId:
                     if fullMatch != '':
-                        fullMatch = fullMatch + '{7f0a}{7f02}' + jaLine['line']
+                        fullMatch = fullMatch + '\n' + jaLine['line']
                     else:
                         fullMatch = jaLine['line']
 
         # Print only moderate translations
-        if avgConfidence < 0.8 and avgConfidence > 0.05:
+        if avgConfidence > 0.8:
             print( "Line:\n%s" % csvLine['line'] )
             print( "Matched Line:\n%s" % fullMatch )
             print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (bestTransFile, avgConfidence*100, trans) )
