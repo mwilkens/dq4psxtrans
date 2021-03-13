@@ -1,4 +1,5 @@
 from shiftjis import decodeShiftJIS
+from helpers import printHex
 
 def parseTree( switch, offset, curNode, bytes):
     index = curNode * 2 + ( offset if switch else 0 )
@@ -63,10 +64,79 @@ def decodeHuffman( offset, code, huff ):
         byte_idx += 1
     return dialog
 
+def genFreqTable( text ):
+    ft = {}
+    for char in text:
+        if char in ft:
+            ft[char] += 1
+        else:
+            ft[char] = 1
+    return ft
 
-'''
+def createNode( ft, num ):
+    # Get the first minimum
+    min1k = min( ft, key=ft.get )
+    min1v = ft[min1k]
+    del ft[min1k]
+    # Get the second minimum
+    min2k = min( ft, key=ft.get )
+    min2v = ft[min2k]
+    del ft[min2k]
+    # Create node
+    node = {min1k:min1v,min2k:min2v}
+    ft[num] = min1v + min2v
+    return [ft,node]
 
-7D 02 00 00
+def bitStr2Bytes(s):
+    return int(s, 2).to_bytes((len(s) + 7) // 8, byteorder='big')
+
+def encodeHuffman( text ):
+    huffTree = ""
+    nodes = {}
+    # Generate character frequency table
+    ft = genFreqTable( text )
+    # Create nodes using min-heap
+    nn = 0
+    while len(ft) != 1:
+        [ft,nodes[nn]] = createNode(ft, nn)
+        nn += 1
+    
+    # Building Huffman Tree (using recursion)
+    def unpack(branch):
+        rt = {}
+        for n in [*branch]:
+            if type(n) == int:
+                rt[nn - n - 1] = unpack(nodes[n])
+            else:
+                rt[n] = branch[n]
+        return rt
+    ft = unpack(ft)
+
+    # Create codes for each character
+    def traverse(branch, curCode):
+        codeList = {}
+        stem = [*branch]
+        if type(stem[0]) == int:
+            codeList.update( traverse(branch[stem[0]],curCode + '0') )
+        else:
+            codeList[stem[0]] = curCode + '0'
+
+        if type(stem[1]) == int:
+            codeList.update( traverse(branch[stem[1]],curCode + '1') )
+        else:
+            codeList[stem[1]] = curCode + '1'
+        return codeList
+    codeList = traverse( ft[0], '' )
+    
+    # Actually encode the string with our new codes
+    huffmanStr = ''
+    for char in text:
+        huffmanStr += codeList[char]
+    huffmanCode = bitStr2Bytes( huffmanStr )
+    
+    printHex( huffmanCode )
 
 
-'''
+sampleText = "Huffman coding is a lossless data compression algorithm. The idea is to assign variable-length codes to input characters, lengths of the assigned codes are based on the frequencies of corresponding characters. The most frequent character gets the smallest code and the least frequent character gets the largest code."
+
+encodeHuffman( sampleText )
