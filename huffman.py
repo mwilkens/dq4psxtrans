@@ -64,6 +64,7 @@ def decodeHuffman( offset, code, huff ):
         byte_idx += 1
     return dialog
 
+#TODO: Deal with {7fxx} characters here smh
 def genFreqTable( text ):
     ft = {}
     for char in text:
@@ -137,6 +138,6 @@ def encodeHuffman( text ):
     printHex( huffmanCode )
 
 
-sampleText = "Huffman coding is a lossless data compression algorithm. The idea is to assign variable-length codes to input characters, lengths of the assigned codes are based on the frequencies of corresponding characters. The most frequent character gets the smallest code and the least frequent character gets the largest code."
+sampleText = "Ye can't turn me down like that! Please!{7f0a}{7f02}'Tis forbidden to enter into the castle at night.{0000}"
 
 encodeHuffman( sampleText )
