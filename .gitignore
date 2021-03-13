@@ -1,5 +1,6 @@
 *.pyc
 *.csv
+*.obb
 assets/**
 jdialog/**
 HBD1PS1D.Q41
