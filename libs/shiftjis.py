@@ -2,33 +2,36 @@ import io
 
 ShiftJISLookup = {}
 
-def loadShiftJIS( file ):
-  with io.open(file, mode="r", encoding="utf-8") as sjis_fh:
-    for line in sjis_fh:
-      line = line.split(' ')
-      base = line[0]
-      offset = line[1]
-      lookup = [x.strip('\n') for x in line[3:]]
-      if lookup[0:3] == ['','','']:
-        lookup = lookup[2:]
-      if base not in ShiftJISLookup:
-        ShiftJISLookup[base] = {}
-      ShiftJISLookup[base][offset] = lookup
+asciiMap = {
+  ' ':0x8140,
+  '{':0x816f,
+  '}':0x8170,
+  '.':0x8142,
+  '\'':0x8166,
+  '?':0x8148,
+  '!':0x8149
+}
+
+def mapASCII( char ):
+  # Uppercase Letters
+  if( ord(char) >= 0x41 and ord(char) <= 0x5A ):
+    char = ord(char) + 0x60 - 0x41 + 0x8200
+    return decodeShiftJIS( char )
+  # Lowercase Letters
+  elif( ord(char) >= 0x61 and ord(char) <= 0x7A ):
+    char = ord(char) + 0x81 - 0x61 + 0x8200
+    return decodeShiftJIS( char )
+  # Decimals
+  elif( ord(char) >= 0x30 and ord(char) <= 0x39 ):
+    char = ord(char) + 0x4f - 0x30 + 0x8200
+    return decodeShiftJIS( char )
+  # Map
+  elif char in asciiMap:
+    return decodeShiftJIS( asciiMap[char] )
+
 
 def decodeShiftJIS( sjis ):
-    if ShiftJISLookup == {}:
-      loadShiftJIS( 'kanji_codes.sjis.txt' )
-    byte = sjis & 0xFF
-    base = "%x" % ((sjis & 0xFF00) >> 8)
-    if base in ShiftJISLookup:
-        for offset in ShiftJISLookup[base]:
-          i_off = int(offset, 16)
-          if byte >= i_off:
-            prevOffset = offset
-        # No more offsets to parse
-        i_off = int( prevOffset, 16 )
-        if( byte-i_off < len(ShiftJISLookup[base][prevOffset])):
-          return ShiftJISLookup[base][prevOffset][byte - i_off]
-    # TODO: Figure out why there's so many 0xFExx and 0x81Fx characters
-    # print( "Ignored Byte: %s%02x" % (base,byte))
-    return ''
+  return sjis.to_bytes(2,byteorder='big',signed=False).decode('cp932')
+
+def encodeShiftJIS( ascii ):
+  return mapASCII( ascii )
