@@ -77,6 +77,7 @@ class TextBlock:
 
         # Decoded Outputs of the TextBlock
         self.huffTree = []
+        self.encHuffTree = 0
         self.decText = {}
     
     def parseHeader(self, header):
