@@ -1,5 +1,5 @@
-from shiftjis import decodeShiftJIS
-from helpers import printHex
+from libs.shiftjis import decodeShiftJIS
+from libs.helpers import printHex
 
 def parseTree( switch, offset, curNode, bytes):
     index = curNode * 2 + ( offset if switch else 0 )

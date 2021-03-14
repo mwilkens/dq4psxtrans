@@ -1,5 +1,5 @@
 # Script for Working With DQ4 Data
-from blockDefs import *
+from libs.blockDefs import *
 import io
 
 with open("HBD1PS1D.Q41", "rb") as dq4b:

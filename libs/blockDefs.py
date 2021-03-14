@@ -1,6 +1,6 @@
 from itertools import count
-from helpers import *
-from huffman import *
+from libs.huffman import *
+from libs.helpers import *
 
 # Data Class for 2048 byte blocks
 class Block:
