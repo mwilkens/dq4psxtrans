@@ -1,14 +1,20 @@
-from libs.shiftjis import decodeShiftJIS
-from libs.helpers import printHex
+try:
+    from libs.shiftjis import decodeShiftJIS, encodeShiftJIS
+    from libs.helpers import printHex
+except:
+    from shiftjis import decodeShiftJIS, encodeShiftJIS
+    from helpers import printHex
 
 def parseTree( switch, offset, curNode, bytes):
     index = curNode * 2 + ( offset if switch else 0 )
+    print( "Index: %d" % index )
     hByte = bytes[ index + 1 ]
     lByte = bytes[ index ]
 
     # If we have a node
     if( (hByte&0xF0) == 0x80 ):
         node = (hByte << 8) + lByte - 0x8000
+        print( "Found Node: %d" % node )
         # Create a new node
         temp = [None,None]
         temp[0] = parseTree( 0, offset, node, bytes)
@@ -21,6 +27,7 @@ def parseTree( switch, offset, curNode, bytes):
     else:
         hByte += 0x80
         encLetter = (hByte << 8) + lByte
+        print( "Found Letter: %s" % decodeShiftJIS( encLetter ) )
         return decodeShiftJIS( encLetter )
 
 
@@ -107,11 +114,13 @@ def encodeHuffman( text ):
         rt = {}
         for n in [*branch]:
             if type(n) == int:
-                rt[nn - n - 1] = unpack(nodes[n])
+                rt[n] = unpack(nodes[n])
             else:
                 rt[n] = branch[n]
         return rt
     ft = unpack(ft)
+
+    print( ft )
 
     # Create codes for each character
     def traverse(branch, curCode):
@@ -127,17 +136,45 @@ def encodeHuffman( text ):
         else:
             codeList[stem[1]] = curCode + '1'
         return codeList
-    codeList = traverse( ft[0], '' )
+    codeList = traverse( list(ft.values())[0], '' )
     
     # Actually encode the string with our new codes
     huffmanStr = ''
     for char in text:
         huffmanStr += codeList[char]
     huffmanCode = bitStr2Bytes( huffmanStr )
-    
-    printHex( huffmanCode )
+
+    def encTree( node, tree, root=False ):
+        for branch in [*node]:
+            if type(node[branch]) == dict:
+                tree = b'\x80' + tree
+                nodeNum = branch
+                if root:
+                    nodeNum -= 1
+                nodeNum = nodeNum.to_bytes(1,byteorder='big',signed=False)
+                tree = nodeNum + tree
+                tree = encTree( node[branch], tree )
+            else:
+                val = encodeShiftJIS( branch )
+                tree = val + tree
+        return tree
+    tree = encTree( ft, b'\x00\x00', True )
+
+    return [huffmanCode, tree]
 
 
 sampleText = "Ye can't turn me down like that! Please!{7f0a}{7f02}'Tis forbidden to enter into the castle at night.{0000}"
 
-encodeHuffman( sampleText )
+[encText, encTree] = encodeHuffman( sampleText )
+
+printHex( encTree )
+
+tree = makeHuffTree( encTree )
+
+print( tree )
+
+text = decodeHuffman( 0, encText, tree )
+
+print( text )
+
+

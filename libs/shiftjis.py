@@ -16,18 +16,18 @@ def mapASCII( char ):
   # Uppercase Letters
   if( ord(char) >= 0x41 and ord(char) <= 0x5A ):
     char = ord(char) + 0x60 - 0x41 + 0x8200
-    return decodeShiftJIS( char )
+    return char
   # Lowercase Letters
   elif( ord(char) >= 0x61 and ord(char) <= 0x7A ):
     char = ord(char) + 0x81 - 0x61 + 0x8200
-    return decodeShiftJIS( char )
+    return char
   # Decimals
   elif( ord(char) >= 0x30 and ord(char) <= 0x39 ):
     char = ord(char) + 0x4f - 0x30 + 0x8200
-    return decodeShiftJIS( char )
+    return char
   # Map
   elif char in asciiMap:
-    return decodeShiftJIS( asciiMap[char] )
+    return asciiMap[char]
 
 
 def decodeShiftJIS( sjis ):
@@ -38,4 +38,5 @@ def decodeShiftJIS( sjis ):
     return ''
 
 def encodeShiftJIS( ascii ):
-  return mapASCII( ascii )
+  c = mapASCII( ascii ) - 0x8000
+  return c.to_bytes(2,byteorder='little',signed=False)
