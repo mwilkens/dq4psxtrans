@@ -23,9 +23,12 @@ nameMap = {
     'トルネコ': '{7f24}',
     'ミネア': '{7f25}',
     'マーニャ': '{7f26}',
+    'ホフマン': '{7f2d}',
     'パノン': '{7f2e}',
     'ピサロ': '{7f31}', # Saro
     'ロザリー': '{7f32}',
+    'エッグラとチキーラ': 'チキーラとエッグラ', # The Android version swaps their names for some reason
+    'チキーラとエッグラ': 'エッグラとチキーラ',
 }
 
 controlChars = ['{0000}','{7f02}','{7f0a}','{7f0b}','{7f1f}']
@@ -135,6 +138,7 @@ noMatches = 0
 
 for csvFile in csvFiles[10:]:
     print( "\n+=======================+\n!!SCANNING %s !!\n+=======================+\n" % csvFile)
+    print(   "+================TOTAL:%d======POOR:%d======BAD:%d===============+\n" % (totalLines, poorMatches, noMatches))
     # Lets start by just translating one dialog for now.
     csvDialog = readCSVFile( './jdialog/' + csvFile )
 
@@ -222,11 +226,10 @@ for csvFile in csvFiles[10:]:
                         fullMatch = jaLine['line']
 
         # Print only moderate translations
-        if avgConfidence > 0.8:
+        if avgConfidence < 0.7:
             print( "Line:\n%s" % csvLine['line'] )
             print( "Matched Line:\n%s" % fullMatch )
             print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (bestTransFile, avgConfidence*100, trans) )
-            print( "+========TOTAL:%d======POOR:%d======BAD:%d=========+\n" % (totalLines, poorMatches, noMatches))
 
         if avgConfidence < 0.05:
             noMatches += 1
