@@ -71,10 +71,26 @@ def decodeHuffman( offset, code, huff ):
         byte_idx += 1
     return dialog
 
-#TODO: Deal with {7fxx} characters here smh
 def genFreqTable( text ):
     ft = {}
+    isControl = False
+    ctrlBuff = ''
     for char in text:
+        if char == '{':
+            isControl = True
+            continue
+        elif char == '}':
+            isControl = False
+            if ctrlBuff in ft:
+                ft[ctrlBuff] += 1
+            else:
+                ft[ctrlBuff] = 1
+            ctrlBuff = ''
+        
+        if isControl:
+            ctrlBuff += char
+            continue
+
         if char in ft:
             ft[char] += 1
         else:
