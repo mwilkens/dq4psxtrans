@@ -13,7 +13,7 @@ My goal here is to get at least an accessible foundation for translation started
 * [DONE] Extract Japanese Script from File
 * [DONE] Convert Android English Text to Correct Format
 * [WIP] Create script that guesses translation based on text similarity
-* Write Huffman Encode Functionality
+* [DONE] Write Huffman Encode Functionality
 * Write Textblock Modification Functionality
 * Calculate Pointer Mod Values
 * [WIP] Write ASM Generator for Pointer Redirection
