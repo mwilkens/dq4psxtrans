@@ -34,7 +34,7 @@ def decodeShiftJIS( sjis ):
   try:
     return sjis.to_bytes(2,byteorder='big',signed=False).decode('cp932')
   except:
-    print( "BAD SHIFTJIS: 0x%02X" % sjis )
+    # print( "BAD SHIFTJIS: 0x%02X" % sjis )
     return ''
 
 def encodeShiftJIS( ascii ):

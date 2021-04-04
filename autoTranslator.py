@@ -1,6 +1,8 @@
 import io
 from difflib import SequenceMatcher
 from os import walk
+import sys
+sys.stdout = open('controlCharScan.txt', 'w', encoding="utf-8")
 
 # Dialog format mapping
 dialogMap = {
@@ -8,7 +10,12 @@ dialogMap = {
     '\n': '',
     '%0': '', # Denotes something but idc
     r'%a00090': '{7f1f}',
-    r'%a00120': '{7f02}{7f4b}', # yeah I don't know
+    r'%a00100': '{7f17}',
+    r'%a00120': '{7fxx}', # better matching this way
+    r'%a00140': '{7f33}', # Also 7f4b
+    r'%a00160': '{7f30}',
+    r'%a00260': '{7f42}',
+    r'%a00520': '{7f15}', # Money amount
     '＊「': '',
     '*: ': '',
 }
@@ -23,15 +30,19 @@ nameMap = {
     'トルネコ': '{7f24}',
     'ミネア': '{7f25}',
     'マーニャ': '{7f26}',
+    'スコット': '{7f28}',
+    'アレクス': '{7f29}',
+    'フレア': '{7f2a}',
+    'ホイミン': '{7f2b}',
+    'オーリン': '{7f2c}',
     'ホフマン': '{7f2d}',
     'パノン': '{7f2e}',
+    'ルーシア': '{7f2f}',
     'ピサロ': '{7f31}', # Saro
     'ロザリー': '{7f32}',
     'エッグラとチキーラ': 'チキーラとエッグラ', # The Android version swaps their names for some reason
     'チキーラとエッグラ': 'エッグラとチキーラ',
 }
-
-controlChars = ['{0000}','{7f02}','{7f0a}','{7f0b}','{7f1f}']
 
 # Searches a binary file for next instance of a certain text/hex/etc
 def seekText( fh, text ):
@@ -206,12 +217,39 @@ def getTranslation( line ):
     # Return the translation
     return translation
 
+def getControlChars( line ):
+    isCC = False
+    ccBuff = ''
+    ccList = []
+    for char in line:
+        if char == '{':
+            isCC = True
+            continue
+        if char == '}':
+            isCC = False
+            ccList.append('{' + ccBuff + '}')
+            ccBuff = ''
+            continue
+        if isCC:
+            ccBuff += char
+    return ccList
+
 ####################################################
 ## Go through each CSV File and start translating ##
 ####################################################
 
-for csvFile in csvFiles[10:]:
-    print( "\n+=======================+\n!!SCANNING %s !!\n+=======================+\n" % csvFile)
+controlChars = [
+    '{0000}','{7f02}','{7f04}','{7f0a}','{7f0b}','{7f1f}',
+    '{7f15}','{7f16}','{7f17}','{7f18}''{7f20}','{7f21}',
+    '{7f22}','{7f23}','{7f24}','{7f25}','{7f26}','{7f27}',
+    '{7f28}','{7f29}','{7f2a}','{7f2b}','{7f2c}','{7f2d}',
+    '{7f2e}','{7f2f}','{7f30}','{7f31}','{7f32}','{7f33}',
+    '{7f34}','{7f42}','{7f43}','{7f44}','{7f45}','{7f4c}'
+]
+controlCharMap = {}
+
+for csvFile in csvFiles[580:]:
+    print( "\n+==================+!! SCANNING %s !!+==================+" % csvFile)
     print(   "+================TOTAL:%d======POOR:%d======BAD:%d===============+\n" % (totalLines, poorMatches, noMatches))
     # Lets start by just translating one dialog for now.
     csvDialog = readCSVFile( './jdialog/' + csvFile )
@@ -222,8 +260,6 @@ for csvFile in csvFiles[10:]:
         # Ignore blank/dummy lines
         if( csvLine['line'] == '{0000}' or csvLine['line'] == 'ダミー{7f0b}{0000}'):
             continue
-        
-
         
         translation = getTranslation( csvLine['line'])
 
@@ -238,14 +274,26 @@ for csvFile in csvFiles[10:]:
                     else:
                         fullMatch = jaLine['line']
 
+        ccs = getControlChars( csvLine['line'] )
+        if translation['similarity'] > 50 and ccs != None:
+            for cc in ccs:
+                if cc not in controlChars:
+                    print( "======== FOUND NEW CONTROL CHAR ============")
+                    print( "==> %s <==" % cc )
+                    print( "Line:\n%s" % csvLine['line'] )
+                    print( "Matched Line:\n%s" % fullMatch )
+                    print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (translation['file'], translation['similarity'], translation['line']) )
+                    controlChars.append(cc)
+
         # Print only moderate translations
-        if translation['similarity'] < 0.7:
+        if False and translation['similarity'] < 70:
             print( "Line:\n%s" % csvLine['line'] )
             print( "Matched Line:\n%s" % fullMatch )
             print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (translation['file'], translation['similarity'], translation['line']) )
 
-        if translation['similarity'] < 0.05:
+        if translation['similarity'] < 5:
             noMatches += 1
-        elif translation['similarity'] < 0.8:
+        elif translation['similarity'] < 80:
             poorMatches += 1
         totalLines += 1
+sys.stdout.close()

@@ -93,6 +93,24 @@ class TextBlock:
         self.huff_e = ( header & 0xFFFFFFFF )
         header = header >> 32
         self.zero = ( header & 0xFFFFFFFF )
+    
+    def parseDHeader(self, dheader):
+        self.one = ( dheader & 0xFFFFFFFF )
+        dheader = dheader >> 32
+        self.d1_off = ( dheader & 0xFFFFFFFF )
+        dheader = dheader >> 32
+        self.d2_off = ( dheader & 0xFFFFFFFF )
+        dheader = dheader >> 32
+        # 6 vars come after
+        self.d_var = [0,0,0,0,0,0]
+        for i in range(6):
+            self.d_var[i] = ( dheader & 0xFFFF )
+            dheader = dheader >> 16
+    
+    def printDHeader(self):
+        print("-- -- -- D BLOCK O(%08X) D1(%08X) D2(%08X) DV[%02X,%02X,%02X,%02X,%02X,%02X]" % ( \
+            self.one, self.d1_off, self.d2_off, \
+            self.d_var[0],self.d_var[1],self.d_var[2],self.d_var[3],self.d_var[4],self.d_var[5]) )
 
     def parseBody( self, body ):
         # Calculate A, this will be the same as a_off if everything worked right :)
@@ -100,9 +118,9 @@ class TextBlock:
         # This is the text itself, but huffman encoded
         self.encData = byteSlice( body, self.huff_c, self.huff_e, decode=False )
         # Not sure what these are, but they could be important
-        self.e1 = byteRead( body, self.huff_e, 4)
-        self.e2 = byteRead( body, self.huff_e+4, 4)
-        self.e3 = byteRead( body, self.huff_e+8, 2)
+        self.e1 = byteRead( body, self.huff_e, 4 )
+        self.e2 = byteRead( body, self.huff_e+4, 4 )
+        self.e3 = byteRead( body, self.huff_e+8, 2 )
         
         # Occasionally d is zero, which means we need to set d to a
         self.d_a = None
@@ -111,15 +129,32 @@ class TextBlock:
         else:
             # If we do have d, we can extract this range, not sure what it is though
             self.d_a = byteSlice( body, self.huff_d, self.a_off, decode=False )
+            self.dheader = byteRead( body, self.huff_d, 28 )
+            self.parseDHeader( self.dheader )
+            self.printDHeader()
+            print( "D1 Length: %04X, D2 Length: %04X" % (self.d2_off - self.d1_off, self.a_off - self.d2_off ))
+
+            self.d1 = byteSlice( body, self.d1_off, self.d2_off, decode=False )
+            self.d2 = byteSlice( body, self.d2_off, self.a_off, decode=False )
+
+            if( self.d2_off - self.d1_off < 0x50 ):
+                print("D1 Block")
+                printHex( self.d1 )
+                print("D2 Block")
+                printHex( self.d2 )
+
         
         # This is the actual huffman tree
         self.encHuffTree = byteSlice( body, self.huff_e+10, self.huff_d, decode=False )
         
         self.hufftree = makeHuffTree( self.encHuffTree )
         self.decText = decodeHuffman( self.huff_c, self.encData, self.hufftree )
+
+        print( "a:%02X, e's: [%04X,%04X,%02X], htlen:%04X, edlen:%04X" %
+            (self.a[0], self.e1, self.e2, self.e3, len(self.encHuffTree), len(self.encData)) )
     
     def printBlockInfo(self):
-        print( "-- -- TEXTBLOCK #%08X: A(%08X) HB(%08X) HT(%08X) HE(%08X) Z(%08X)" % \
+        print( "-- -- TEXTBLOCK #%08X: A(%08X) HC(%08X) HE(%08X) HD(%08X) Z(%08X)" % \
             (self.uuid, self.a_off, \
-            self.huff_c, self.huff_d, self.huff_e, \
+            self.huff_c, self.huff_e, self.huff_d, \
             self.zero ) )

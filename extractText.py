@@ -42,10 +42,11 @@ with open("HBD1PS1D.Q41", "rb") as dq4b:
                 tbHeader = dq4b.read(24)
                 tb = TextBlock()
                 tb.parseHeader(tbHeader)
-                # tb.printBlockInfo()
 
                 # go 24 bytes back, just so the offsets in the header still work
                 dq4b.seek(-24,1)
+                print( "\nOffset 0x%08X" % dq4b.tell() )
+                tb.printBlockInfo()
                 tbBody = dq4b.read( sb.compLength )
                 tb.parseBody( tbBody )
 

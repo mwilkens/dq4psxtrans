@@ -26,24 +26,6 @@ My goal here is to get at least an accessible foundation for translation started
 * ... TBD
 * Make a cute intro
 
-## Notes on Android Dialog Format
-
-[Useful Forum Thread](https://www.romhacking.net/forum/index.php?topic=14879.20 )
-
-Each English dialog starts with `@a@b`. Dialog with names starts with `@aName@b`. Each dialog ends with `@c0@`.
-
-In hex these are:
-
-> `40 61 40 62 | @a@b`
-
-> `40 63 30 40 | @c0@`
-
-The value `%a` actually represents the start of a name, so it can also be seen in dialog. The name is referenced by ID. An example of dialog referencing the hero is below.
-
-`*: What's the matter, %a00090?\nHave you had enough?`
-
-The Japanese files end with `@c0@`, `@c1@`, `@c2@` or `@c3@`. Not sure why. The name is also prefixed by a zero-padded 4 digit decimal i.e. `@a0001  王@b` (王 means King).
-
 ## Auto Translation
 
 The auto-translator works really well. As can be seen below, the dialog is matched near perfectly for the most part. The big issue is the English dialog is not formatted the same way as the Japanese dialog which is incredibly annoying.
@@ -75,26 +57,81 @@ So main concern of populace is dream? Truly this is peaceful town...{0000}
 +====================================+
 ```
 
-### Names and their Mappings in the PSX Script
+### Control Characters
+
+**General Notes:**
 
 `{7f04}{7fXX}` comes at the beginning of each named dialog. Below is a list of names I've figured out.
 
-Name Table
-| Name | Control Code | Notes |
+**Control Code Table**
+
+| Desc/Name | Control Code | Notes |
 | ---- | ------------ | ----- |
+| End of dialog | 0000 | Required to end dialog |
+| New line + Tab | 7f02 | |
+| Name decorator | 7f04 | Needs confirmation, always found at the beginning (italics maybe?) |
+| Blinking Cursor | 7f0a | |
+| EOL Signifier | 7f0b | Opposite of 7f0a |
+| EOL Signifier | 7f0c | Comes in big groups like, 6 times in a row |
+| Recieved gold | 7f15 | %a00520 in Android dialog |
+| N/A | 7f16 | See 7f18 |
+| N/A | 7f17 | e.g. "{7f17}なんだが", %a00100 in Android dialog |
+| N/A | 7f18 | e.g. "{7f17}が　{7f15}本！{7f02}{7f18}が　{7f16}着！{7f02}たしかに　受け取ったぞ。" |
+| ルーシア | 7f1a | Android translates to "Orifiela" |
+| Player Name | 7f1f | %a00090 in Android dialog |
 | ライアン | 7f20 | |
 | アリーナ | 7f21 | Occasionally not translated in PSX | 
 | クリフト | 7f22 | |
 | ブライ | 7f23 | |
-| トルネコ | 7f24 |
+| トルネコ | 7f24 | |
 | ミネア | 7f25 | |
-| マーニャ | 7f26 |
+| マーニャ | 7f26 | |
+| スコット | 7f28 | |
+| アレクス | 7f29 | |
+| フレア | 7f2a | |
+| ホイミン | 7f2b | |
+| オーリン | 7f2c | |
 | ホフマン | 7f2d | ホフマン is 7f2d but 7f2d is not always ホフマン |
 | パノン | 7f2e | |
+| ルーシア | 7f2f | |
+| Person | 7f30 | %a00160 in Android dialog |
 | ピサロ | 7f31 | Mostly seen as デス{7f31} i.e. adding Necro- to saro |
-| トム | N/A | |
-| ドン・ガアデ | N/A | |
-| シンシア | N/A | |
+| ロザリー | 7f32 | |
+| Person | 7f33 | %a00140 in Android dialog. エッグラ apologizes to this person |
+| Some kind of custom name | 7f34 | %a00120 AND %a00140 in Android dialog |
+| Some kind of town name | 7f42 | e.g "{7f42}は すでに世界で最大の町である。", %a00260 in Android dialog |
+| Emphasis | 7f43 | Needs confirmation |
+| Emphasis | 7f44 | Seems to be in sad places |
+| Emphasis | 7f45 | Seen before デスピサロ's dialog sometimes |
+| Noun | 7f4b | %a00120 in Android dialog e.g. "この上は　{7f4b}さんたちに頼るのみです。" |
+| Name | 7f4c | %a00140 in Android dialog, same as 7f33?? |
+
+**Names Without Control Chars**
+
+*There's probably more here but w/e*
+
+Name
+* トム
+* ドン・ガアデ
+* シンシア
+
+## Notes on Android Dialog Format
+
+[Useful Forum Thread](https://www.romhacking.net/forum/index.php?topic=14879.20 )
+
+Each English dialog starts with `@a@b`. Dialog with names starts with `@aName@b`. Each dialog ends with `@c0@`.
+
+In hex these are:
+
+> `40 61 40 62 | @a@b`
+
+> `40 63 30 40 | @c0@`
+
+The value `%a` actually represents the start of a name, so it can also be seen in dialog. The name is referenced by ID. An example of dialog referencing the hero is below.
+
+`*: What's the matter, %a00090?\nHave you had enough?`
+
+The Japanese files end with `@c0@`, `@c1@`, `@c2@` or `@c3@`. Not sure why. The name is also prefixed by a zero-padded 4 digit decimal i.e. `@a0001  王@b` (王 means King).
 
 ### Conditional Dialog in the Android English Script
 
@@ -122,14 +159,6 @@ where `ID` is some kind of relevant variable. e.g.
 
 Best guess is that the `%H` operator checks if something is greater than 1.
 
-### Other Control Codes
-
-| Control Code | Android Code | Best Guess |
-| ------------ | ------------ | ---------- |
-| 7f17 | %a00100 | Some kind of relevant item |
-| 7f15 | %a00750 or %a00620 or %a00530 | Gold amount for item, probably not consistent in Android |
-| 7f43 | N/A | Used for emphasis, needs testing. |
-
 ### Special Files
 
 * 0020.csv seems to be mostly names.
@@ -138,8 +167,87 @@ Best guess is that the `%H` operator checks if something is greater than 1.
 * [DONE] Replace names in beginning of dialog
 * Add names at the beginning of English matched dialog
 * Get rid of conditional lines
-* Figure out maximum number of characters per line
+* [DONE] Figure out maximum number of characters per line
 * Auto-place {7f02}s in appropriate places if translated lines are too long.
+
+## Text Block Investigation
+
+While Markus does a great job exploring the "Text Block" in his blog post I wanted to explore the block a little bit further.
+
+First I looked into the "E" block. This contains two offsets which point us to the Huffman Tree and the D section.
+
+**E Block**
+| Name | Size | Description |
+| ---- | ---- | ----------- |
+| E1 | 4 bytes | Offset to Huffman Tree |
+| E2 | 4 bytes | Offset to D Block (E1+E2=D) (also the length of the huffman tree) |
+| E3 | 2 bytes | Unknown |
+
+### D Section
+
+The D section is very interesting. The begining of the D section is a header that's 28 bytes long. 
+
+| Start | Length | Comment |
+| ----- | ------ | ------- |
+| 0x00 | 4 | Always 0x01 |
+| 0x04 | 4 | Offset for first data section, we'll call it "d1" |
+| 0x08 | 4 | Offset for second data section, we'll call it "d2" |
+| 0x0C | 2 | Unknown |
+| 0x0E | 2 | Always 0x02 |
+| 0x10 | 2 | Always 0x02 |
+| 0x12 | 2 | Unknown |
+| 0x14 | 2 | Always 0x10 |
+| 0x16 | 2 | Always 0x10 |
+
+The first data section looks very structured. Every bit in the 0x07, 0x08, 0x0E and 0x0F position is zero. It usually starts with 0x4000 (4 in little endian) and usually ends in 8 bytes of padding. This changes if the d section is small.
+
+The second section is fairly random. Consistently there seem to be a lot of occurances of 0x55, but that could be coincidence.
+
+The "dummy" (ダミー) blocks have d sections that are just zero'd out stubs and don't follow either of the above rules.
+
+**Example**
+```Text Block Hex Offset 0x004D6020
+Dialog #3CE:
+a = 0x0390
+c = 0x0018
+e = 0x00BC
+d = 0x01FC
+e's = [00C6,0160,4C]
+Huffman Tree Length = 0x0136
+Encoded Data Length = 0x00A4
+D HEADER:
+O  = 0x0001
+D1 = 0x0218
+D2 = 0x0264
+D Vals = [02,02,02,08,10,10]
+
+== D1 Block ==
+0x0000 | 04 00 00 00 17 04 00 00 | CA 97 0C 0D 74 03 00 00 |
+0x0010 | 68 96 0C 0D DC 02 00 00 | 84 94 0C 0D 4D 02 00 00 |
+0x0020 | 58 93 0C 0D BC 01 00 00 | 84 8E 0C 0D 30 01 00 00 |
+0x0030 | 64 8F 0C 0D A4 00 00 00 | EC 8D 0C 0D 00 00 00 00 |
+0x0040 | E4 8C 0C 0D 00 00 00 00 | 00 00 00 00
+== D2 Block ==
+0x0000 | 14 C4 AC 50 55 C1 C1 F5 | 1D 74 DF D0 0D 0A 55 DD |
+0x0010 | 45 F7 DD D0 54 D0 0D 1D | F4 DD D0 DD 90 0D DD 59 |
+0x0020 | 4F 5D 79 63 C3 0F CD 33 | 4D 14 C6 D8 A0 33 E8 50 |
+0x0030 | 55 14 AC D0 BF 0D C1 8D | 39 0D 55 D4 DC 3F 34 37 |
+0x0040 | 37 57 51 73 FF D0 DC DC | DC 0C 33 8C 4C C6 64 E5 |
+0x0050 | 63 55 55 85 6A EA 4F 7D | 1F 43 55 35 F7 7D 73 55 |
+0x0060 | 35 C3 F7 CF 55 15 D3 F7 | 4F 55 55 15 FD FF FF 58 |
+0x0070 | 8C D5 0F 31 DC D8 0C 8D | 8D 55 51 F3 FD 3A 57 14 |
+0x0080 | 8C 9A 41 73 D0 EB 10 DE | 10 0C 8D AD 97 62 57 F0 |
+0x0090 | 8D C3 8F 33 C5 54 55 55 | D4 FF FF 43 63 4C 8D 55 |
+0x00A0 | D8 D8 3F 35 36 43 57 55 | D8 FD DF D4 CD 0D 7A 73 |
+0x00B0 | 43 5F 55 4D D3 FF 0F 0C | 31 56 55 85 FF FD 8F 55 |
+0x00C0 | 15 D3 FF 4F 55 55 15 F4 | F0 F0 37 0C 51 3C 46 31 | 
+0x00D0 | EA D0 0C 06 43 53 90 30 | 59 C1 F0 FC 0F 55 18 F7 |
+0x00E0 | 4D 71 AB 55 05 DD 70 FF | 77 53 8F AD 54 15 34 34 |
+0x00F0 | F4 77 43 43 53 B7 AE D8 | 1D 1C 4C DD 70 30 E9 0D |
+0x0100 | C1 54 30 4C F3 03 55 55 | 0C FD DF 5C 55 CD FD DF |
+0x0110 | 54 55 55 D1 AA EA 4F 7D | DF 5C 55 CD 7D DF 5C 55 |
+0x0120 | CD F0 FD 53 55 55 45 FF | FF 3F 00 00
+```
 
 ## Credits
 
