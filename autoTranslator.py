@@ -136,6 +136,80 @@ totalLines = 0
 poorMatches = 0
 noMatches = 0
 
+def getTranslation( line ):
+    # Default Return Value
+    translation = {'line':'', 'similarity':0, 'file':'', 'ids':[]}
+
+    # We need to keep track of how confident we are of the translation
+    avgConfidence = 0
+
+    # PSX lines are sometimes packaged with these two controls
+    # We can split the dialog, translate then repackage.
+    # Also get rid of the end character, cos we add it back later
+    psxLines = line.split('{7f0a}{7f02}')
+    for psxLine in psxLines:
+        # If we've found the file the dialog contains, lets limit our search to that file
+        if translation['file'] != '':
+            searchFiles = [translation['file']]
+        else:
+            searchFiles = mptFiles
+
+        for mptDialog in searchFiles:
+            # Get Japanese and English Scripts
+            mptjScript = readMPTFile( './assets/msg/ja/' + mptDialog, condition=True )
+
+            if mptjScript == -1:
+                continue
+
+            candidateId = 0
+
+            # Read each line of Japanese script
+            for mptLine in mptjScript:
+                # Remove all control characters for the sim check
+                a = mptLine['line'].translate(str.maketrans('', '', '{0123456789abcdef}'))
+                b = psxLine.translate(str.maketrans('', '', '\%{0123456789abcdef}'))
+                # Calculate the similarity
+                sim = SequenceMatcher(None, a, b).ratio()
+                
+                if sim > translation['similarity']:
+                    candidateId = mptLine['id']
+                    translation['file'] = mptDialog
+                    translation['similarity'] = sim
+
+                if translation['similarity'] > 0.9:
+                    break
+            if translation['similarity'] > 0.9:
+                break
+
+        if avgConfidence == 0:
+            avgConfidence += sim
+        else:
+            avgConfidence = (sim + avgConfidence)/2
+        
+        # Add line to lines to matches
+        translation['ids'].append( candidateId )
+
+    translation['similarity'] = avgConfidence*100
+
+    # Load the matched file
+    mpteScript = readMPTFile( './assets/msg/en/' + translation['file'] )
+    # For each matched ID
+    for lineId in translation['ids']:
+        for engLine in mpteScript:
+            if engLine['id'] == lineId:
+                if translation['line'] != '':
+                    # Append translation to total buffer
+                    translation['line'] = translation['line'] + '\n' + engLine['line']
+                else:
+                    translation['line'] = engLine['line']
+    
+    # Return the translation
+    return translation
+
+####################################################
+## Go through each CSV File and start translating ##
+####################################################
+
 for csvFile in csvFiles[10:]:
     print( "\n+=======================+\n!!SCANNING %s !!\n+=======================+\n" % csvFile)
     print(   "+================TOTAL:%d======POOR:%d======BAD:%d===============+\n" % (totalLines, poorMatches, noMatches))
@@ -149,75 +223,14 @@ for csvFile in csvFiles[10:]:
         if( csvLine['line'] == '{0000}' or csvLine['line'] == 'ダミー{7f0b}{0000}'):
             continue
         
-        # PSX lines are sometimes packaged with these two controls
-        # We can split the dialog, translate then repackage.
-        # Also get rid of the end character, cos we add it back later
-        psxLines = csvLine['line'].split('{7f0a}{7f02}')
-        transLines = []
-        avgConfidence = 0
 
-        curLine = 0
-        for psxLine in psxLines:
-
-            # Similarity Tracker
-            bestSim = 0
-            bestTransId = 0
-            bestTransFile = ''
-
-            # If we've found the file the dialog contains, lets limit our search to that file
-            if bestTransFile != '':
-                searchFiles = [bestTransFile]
-            else:
-                searchFiles = mptFiles
-
-            for mptDialog in searchFiles:
-                # Get Japanese and English Scripts
-                mptjScript = readMPTFile( './assets/msg/ja/' + mptDialog, condition=True )
-
-                if mptjScript == -1:
-                    continue
-
-                # Read each line of Japanese script
-                for mptLine in mptjScript:
-                    # Remove all control characters for the sim check
-                    a = mptLine['line'].translate(str.maketrans('', '', '{0123456789abcdef}'))
-                    b = psxLine.translate(str.maketrans('', '', '{0123456789abcdef}'))
-                    # Calculate the similarity
-                    sim = SequenceMatcher(None, a, b).ratio()
-                    
-                    if sim > bestSim:
-                        bestTransId = mptLine['id']
-                        bestTransFile = mptDialog
-                        bestSim = sim
-
-                    if bestSim > 0.9:
-                        break
-                if bestSim > 0.9:
-                    break
-
-            if avgConfidence == 0:
-                avgConfidence += sim
-            else:
-                avgConfidence = (sim + avgConfidence)/2
-
-            transLines.append( bestTransId )
-            curLine += 1
-
-        # Find the appropriate translated line
-        trans = ''
-        mpteScript = readMPTFile( './assets/msg/en/' + bestTransFile )
-        for lineId in transLines:
-            for engLine in mpteScript:
-                if engLine['id'] == lineId:
-                    if trans != '':
-                        trans = trans + '\n' + engLine['line']
-                    else:
-                        trans = engLine['line']
+        
+        translation = getTranslation( csvLine['line'])
 
         # Unnecessary but useful for debugging
-        mptjScript = readMPTFile( './assets/msg/ja/' + bestTransFile )
+        mptjScript = readMPTFile( './assets/msg/ja/' + translation['file'] )
         fullMatch = ''
-        for lineId in transLines:
+        for lineId in translation['ids']:
             for jaLine in mptjScript:
                 if jaLine['id'] == lineId:
                     if fullMatch != '':
@@ -226,13 +239,13 @@ for csvFile in csvFiles[10:]:
                         fullMatch = jaLine['line']
 
         # Print only moderate translations
-        if avgConfidence < 0.7:
+        if translation['similarity'] < 0.7:
             print( "Line:\n%s" % csvLine['line'] )
             print( "Matched Line:\n%s" % fullMatch )
-            print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (bestTransFile, avgConfidence*100, trans) )
+            print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (translation['file'], translation['similarity'], translation['line']) )
 
-        if avgConfidence < 0.05:
+        if translation['similarity'] < 0.05:
             noMatches += 1
-        elif avgConfidence < 0.8:
+        elif translation['similarity'] < 0.8:
             poorMatches += 1
         totalLines += 1
