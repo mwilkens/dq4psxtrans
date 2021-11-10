@@ -26,6 +26,10 @@ My goal here is to get at least an accessible foundation for translation started
 * ... TBD
 * Make a cute intro
 
+## DQ4 PSX Quirks
+
+* Dialog has different pitches per character speaking.
+
 ## Auto Translation
 
 The auto-translator works really well. As can be seen below, the dialog is matched near perfectly for the most part. The big issue is the English dialog is not formatted the same way as the Japanese dialog which is incredibly annoying.
@@ -180,8 +184,8 @@ First I looked into the "E" block. This contains two offsets which point us to t
 | Name | Size | Description |
 | ---- | ---- | ----------- |
 | E1 | 4 bytes | Offset to Huffman Tree |
-| E2 | 4 bytes | Offset to D Block (E1+E2=D) (also the length of the huffman tree) |
-| E3 | 2 bytes | Unknown |
+| E2 | 4 bytes | Length of Huffman Tree |
+| E3 | 2 bytes | Number of Nodes in Huffman Tree |
 
 ### D Section
 

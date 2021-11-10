@@ -2,7 +2,7 @@ import io
 from difflib import SequenceMatcher
 from os import walk
 import sys
-sys.stdout = open('controlCharScan.txt', 'w', encoding="utf-8")
+#sys.stdout = open('controlCharScan.txt', 'w', encoding="utf-8")
 
 # Dialog format mapping
 dialogMap = {
@@ -238,62 +238,64 @@ def getControlChars( line ):
 ## Go through each CSV File and start translating ##
 ####################################################
 
-controlChars = [
-    '{0000}','{7f02}','{7f04}','{7f0a}','{7f0b}','{7f1f}',
-    '{7f15}','{7f16}','{7f17}','{7f18}''{7f20}','{7f21}',
-    '{7f22}','{7f23}','{7f24}','{7f25}','{7f26}','{7f27}',
-    '{7f28}','{7f29}','{7f2a}','{7f2b}','{7f2c}','{7f2d}',
-    '{7f2e}','{7f2f}','{7f30}','{7f31}','{7f32}','{7f33}',
-    '{7f34}','{7f42}','{7f43}','{7f44}','{7f45}','{7f4c}'
-]
-controlCharMap = {}
+if __name__ == "__main__":
 
-for csvFile in csvFiles[580:]:
-    print( "\n+==================+!! SCANNING %s !!+==================+" % csvFile)
-    print(   "+================TOTAL:%d======POOR:%d======BAD:%d===============+\n" % (totalLines, poorMatches, noMatches))
-    # Lets start by just translating one dialog for now.
-    csvDialog = readCSVFile( './jdialog/' + csvFile )
+    controlChars = [
+        '{0000}','{7f02}','{7f04}','{7f0a}','{7f0b}','{7f1f}',
+        '{7f15}','{7f16}','{7f17}','{7f18}''{7f20}','{7f21}',
+        '{7f22}','{7f23}','{7f24}','{7f25}','{7f26}','{7f27}',
+        '{7f28}','{7f29}','{7f2a}','{7f2b}','{7f2c}','{7f2d}',
+        '{7f2e}','{7f2f}','{7f30}','{7f31}','{7f32}','{7f33}',
+        '{7f34}','{7f42}','{7f43}','{7f44}','{7f45}','{7f4c}'
+    ]
+    controlCharMap = {}
 
-    # Translate each line in the PSX Dialog
-    for csvLine in csvDialog:
+    for csvFile in csvFiles[580:]:
+        print( "\n+==================+!! SCANNING %s !!+==================+" % csvFile)
+        print(   "+================TOTAL:%d======POOR:%d======BAD:%d===============+\n" % (totalLines, poorMatches, noMatches))
+        # Lets start by just translating one dialog for now.
+        csvDialog = readCSVFile( './jdialog/' + csvFile )
 
-        # Ignore blank/dummy lines
-        if( csvLine['line'] == '{0000}' or csvLine['line'] == 'ダミー{7f0b}{0000}'):
-            continue
-        
-        translation = getTranslation( csvLine['line'])
+        # Translate each line in the PSX Dialog
+        for csvLine in csvDialog:
 
-        # Unnecessary but useful for debugging
-        mptjScript = readMPTFile( './assets/msg/ja/' + translation['file'] )
-        fullMatch = ''
-        for lineId in translation['ids']:
-            for jaLine in mptjScript:
-                if jaLine['id'] == lineId:
-                    if fullMatch != '':
-                        fullMatch = fullMatch + '\n' + jaLine['line']
-                    else:
-                        fullMatch = jaLine['line']
+            # Ignore blank/dummy lines
+            if( csvLine['line'] == '{0000}' or csvLine['line'] == 'ダミー{7f0b}{0000}'):
+                continue
+            
+            translation = getTranslation( csvLine['line'])
 
-        ccs = getControlChars( csvLine['line'] )
-        if translation['similarity'] > 50 and ccs != None:
-            for cc in ccs:
-                if cc not in controlChars:
-                    print( "======== FOUND NEW CONTROL CHAR ============")
-                    print( "==> %s <==" % cc )
-                    print( "Line:\n%s" % csvLine['line'] )
-                    print( "Matched Line:\n%s" % fullMatch )
-                    print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (translation['file'], translation['similarity'], translation['line']) )
-                    controlChars.append(cc)
+            # Unnecessary but useful for debugging
+            mptjScript = readMPTFile( './assets/msg/ja/' + translation['file'] )
+            fullMatch = ''
+            for lineId in translation['ids']:
+                for jaLine in mptjScript:
+                    if jaLine['id'] == lineId:
+                        if fullMatch != '':
+                            fullMatch = fullMatch + '\n' + jaLine['line']
+                        else:
+                            fullMatch = jaLine['line']
 
-        # Print only moderate translations
-        if False and translation['similarity'] < 70:
-            print( "Line:\n%s" % csvLine['line'] )
-            print( "Matched Line:\n%s" % fullMatch )
-            print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (translation['file'], translation['similarity'], translation['line']) )
+            ccs = getControlChars( csvLine['line'] )
+            if translation['similarity'] > 50 and ccs != None:
+                for cc in ccs:
+                    if cc not in controlChars:
+                        print( "======== FOUND NEW CONTROL CHAR ============")
+                        print( "==> %s <==" % cc )
+                        print( "Line:\n%s" % csvLine['line'] )
+                        print( "Matched Line:\n%s" % fullMatch )
+                        print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (translation['file'], translation['similarity'], translation['line']) )
+                        controlChars.append(cc)
 
-        if translation['similarity'] < 5:
-            noMatches += 1
-        elif translation['similarity'] < 80:
-            poorMatches += 1
-        totalLines += 1
-sys.stdout.close()
+            # Print only moderate translations
+            if False and translation['similarity'] < 70:
+                print( "Line:\n%s" % csvLine['line'] )
+                print( "Matched Line:\n%s" % fullMatch )
+                print( "Translated from %s (Confidence: %0.2f%%):\n%s" % (translation['file'], translation['similarity'], translation['line']) )
+
+            if translation['similarity'] < 5:
+                noMatches += 1
+            elif translation['similarity'] < 80:
+                poorMatches += 1
+            totalLines += 1
+    sys.stdout.close()
