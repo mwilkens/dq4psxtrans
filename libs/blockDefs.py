@@ -87,7 +87,7 @@ class TextBlock:
         self.d_var = [0,0,0,0,0,0]
 
         # Decoded Outputs of the TextBlock
-        self.huffTree = []
+        self.hufftree = []
         self.encHuffTree = 0
         self.decText = {}
     
@@ -119,9 +119,10 @@ class TextBlock:
             dheader = dheader >> 16
     
     def printDHeader(self):
-        print("-- -- -- D BLOCK O(%08X) D1(%08X) D2(%08X) DV[%02X,%02X,%02X,%02X,%02X,%02X]" % ( \
+        print("-- -- -- D BLOCK O(%08X) D1(%08X) D2(%08X) DV[%04X,%04X,%04X,%04X,%04X,%04X]" % ( \
             self.one, self.d1_off, self.d2_off, \
             self.d_var[0],self.d_var[1],self.d_var[2],self.d_var[3],self.d_var[4],self.d_var[5]) )
+        print( "D1 Length: %04X, D2 Length: %04X" % (self.d2_off - self.d1_off, self.a_off - self.d2_off ))
 
     def parseBody( self, body ):
         self.body = body
@@ -143,8 +144,7 @@ class TextBlock:
             self.d_a = byteSlice( body, self.huff_d, self.a_off, decode=False )
             self.dheader = byteRead( body, self.huff_d, 28 )
             self.parseDHeader( self.dheader )
-            self.printDHeader()
-            print( "D1 Length: %04X, D2 Length: %04X" % (self.d2_off - self.d1_off, self.a_off - self.d2_off ))
+            #self.printDHeader()
 
             self.d1 = byteSlice( body, self.d1_off, self.d2_off, decode=False )
             self.d2 = byteSlice( body, self.d2_off, self.a_off, decode=False )
@@ -165,8 +165,8 @@ class TextBlock:
         self.hufftree = makeHuffTree( self.encHuffTree )
         self.decText = decodeHuffman( self.huff_c, self.encData, self.hufftree )
 
-        print( "a:%02X, e's: [%04X,%04X,%02X], htlen:%04X, edlen:%04X" %
-            (self.a[0], self.e1, self.e2, self.e3, len(self.encHuffTree), len(self.encData)) )
+        #print( "a:%02X, e's: [%04X,%04X,%02X], htlen:%04X, edlen:%04X" %
+        #    (self.a[0], self.e1, self.e2, self.e3, len(self.encHuffTree), len(self.encData)) )
     
     def printBlockInfo(self):
         print( "-- -- TEXTBLOCK #%08X: A(%08X) HC(%08X) HE(%08X) HD(%08X) Z(%08X)" % \
@@ -180,7 +180,7 @@ class TextBlock:
             return
         
         # Otherwise encode the text
-        [encText, encTree] = encodeHuffman( sampleText )
+        [encText, encTree] = encodeHuffman( translatedText )
 
         ## Structure: ##
         # 1. Header (24 Bytes)

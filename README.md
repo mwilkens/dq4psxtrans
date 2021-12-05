@@ -189,21 +189,21 @@ First I looked into the "E" block. This contains two offsets which point us to t
 
 ### D Section
 
-The D section is very interesting. The begining of the D section is a header that's 28 bytes long. 
+The D section is very interesting. First of all, it only exists when the "one" value of the text block header is 1, otherwise there's no d-block. The begining of the D section is a header that's 28 bytes long. 
 
 | Start | Length | Comment |
 | ----- | ------ | ------- |
-| 0x00 | 4 | Always 0x01 |
-| 0x04 | 4 | Offset for first data section, we'll call it "d1" |
-| 0x08 | 4 | Offset for second data section, we'll call it "d2" |
-| 0x0C | 2 | Unknown |
-| 0x0E | 2 | Always 0x02 |
-| 0x10 | 2 | Always 0x02 |
-| 0x12 | 2 | Unknown |
-| 0x14 | 2 | Always 0x10 |
-| 0x16 | 2 | Always 0x10 |
+| 0x00 | 8 | Always 0x01 |
+| 0x04 | 8 | Offset for first data section, we'll call it "d1" |
+| 0x08 | 8 | Offset for second data section, we'll call it "d2" |
+| 0x0C | 4 | Number of 2-byte ints read in beginning of d1 |
+| 0x0E | 4 | Always 0x02 |
+| 0x10 | 4 | Always 0x02 |
+| 0x12 | 4 | Roughly the number of "entries" of d1 |
+| 0x14 | 4 | Always 0x10 |
+| 0x16 | 4 | Always 0x10 |
 
-The first data section looks very structured. Every bit in the 0x07, 0x08, 0x0E and 0x0F position is zero. It usually starts with 0x4000 (4 in little endian) and usually ends in 8 bytes of padding. This changes if the d section is small.
+The first data section looks very structured. Every bit in the 0x07, 0x08, 0x0E and 0x0F position is zero. It nearly always ends in 8 bytes of padding. Using the 4th value of the d section header, we can read a list of offsets which gradually increase. The first offset is where the data starts, and if we account for the 16 bytes of termination, we can count the number of 8-byte (or 32-bit) entries which have a similar structure. The 7th entry of the d section header is exactly the number of entries if the 4th value is 2. It is slightly less otherwise. The offsets always correspond to an area of all 0's in the section.
 
 The second section is fairly random. Consistently there seem to be a lot of occurances of 0x55, but that could be coincidence.
 

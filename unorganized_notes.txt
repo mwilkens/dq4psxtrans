@@ -1,0 +1,204 @@
+////////////////////////////////////////////////
+//           D BLOCK INVESTIGATION            //
+////////////////////////////////////////////////
+
+== First a look at a random entry of dialog ==
+
+Offset 0x00505020
+-- -- TEXTBLOCK #0000042C: A(000002B4) HC(00000018) HE(0000006C) HD(00000160) Z(00000000)
+-- -- -- D BLOCK O(00000001) D1(0000017C) D2(000001C0) DV[02,02,02,06,10,10]
+D1 Length: 0044, D2 Length: 00F4
+D1 Block
+0x0000 | 04 00 2A 00 22 03 00 00 | F2 96 0C 0D FB 01 00 00 |
+0x0010 | 58 93 0C 0D A2 00 00 00 | 7A 8D 0D 0D 00 00 00 00 |
+0x0020 | 40 8C 0C 0D 00 00 00 00 | 00 00 00 00 8A 02 00 00 |
+0x0030 | 4F 94 0C 0D 54 01 00 00 | 59 92 0C 0D 00 00 00 00 |
+0x0040 | 00 00 00 00
+D2 Block
+0x0000 | 14 54 55 18 F4 7F 50 D5 | DC 70 57 55 53 F7 FF 53 |
+0x0010 | 37 C5 56 07 1D 64 77 55 | 53 37 DC 4F DD 41 87 E9 |
+0x0020 | DD 0D D9 50 D5 F0 30 FD | 4F C5 31 04 05 55 05 C1 |
+0x0030 | 30 F4 FF 55 41 14 DF 43 | D4 DC 14 E8 54 15 04 31 |
+0x0040 | DC 43 D0 18 14 05 8D 1D | A9 1E 1E 05 81 05 55 C1 |
+0x0050 | 25 34 FC E3 D3 10 86 61 | 53 53 53 55 55 E3 33 3C |
+0x0060 | 55 55 15 F5 30 3C 3C 34 | 04 51 D8 C2 0D 4D DD B7 |
+0x0070 | 0E 3A 1C 34 0C C1 06 43 | 52 27 8C 46 C3 33 3C 53 |
+0x0080 | 4C 55 55 45 FD FF 3F 34 | C6 D4 58 85 8D FD 53 63 |
+0x0090 | 33 74 55 85 DD FF 4D DD | DC A0 37 37 F4 55 D5 34 |
+0x00A0 | FD FF C0 10 33 18 24 53 | C2 1B 07 55 41 14 0C FF |
+0x00B0 | 14 5D 55 D1 F8 AF CC 14 | CC 0D D1 0C 1D 44 A1 DE |
+0x00C0 | 70 07 05 5B 39 0C 4F FF | 88 61 5C 55 55 D1 7F FF |
+0x00D0 | 1F 55 45 51 90 DA C1 54 | 7F C1 D4 55 1D 0F F7 C3 |
+0x00E0 | 50 55 55 0D 7F F6 3F 19 | 74 62 09 37 58 F4 D3 F4 |
+0x00F0 | 03 00 00 00
+a:B4, e's: [0076,00EA,39], htlen:00EA, edlen:0054
+
+Offset: 0x00505020
+Huffman Code starts: 0x00505038
+Huffman Code ends:   0x00505090
+
+Start Offsets:
+Header: 020
+HuffCode: 038 (+0x18/24)
+E Section: 08C (+0x54/84)
+Huff Tree: 096 (+0x0A/10)
+D Section: 180 (+0xEA/234)
+A Offset: 2D4 (+0x0x154/340)
+
+Sub Offset (i.e. -0x20 to all):
+HuffCode: 018
+E Section: 06C
+Huff Tree: 076 (matches e1)
+D Section: 160
+A Offset: 2B4
+
+76 + EA = 160
+E1 + E2 = D Section Offset 
+
+[[[['い', [['さ', '{7f0b}'], 'す']], [['「', '{7f0a}'], ['っ', 'と']]], [[['で', ['こ', 'に']], ['な', ['が', 'れ']]], ['{7f02}', ['て', '。']]]], [[[[[['け', '手'], 'の'], '{7f24}'], ['は', '…']], [[[['引', '屋'], ['く', '残']], ['を', 
+['め', '{7f17}']]], [[['そ', 'た'], ['？', 'む']], [['ふ', 'し'], ['物', '薬']]]]], [[['\u3000', [['掘', '鉱'], ['火', 'つ']]], [['{0000}', ['る', 'だ']], [['使', '念'], 'き']]], [['{7f04}', ['よ', 'ら']], [[['ま', 'み'], 'う'], [['炭', 
+'店'], ['思', '取']]]]]]]
+
+e1 - huff tree offset (definitely that offset)
+e2 - huffman tree length (kinda)
+e3 - number of nodes (I THINK)
+
+D section header (28 bytes long):
+4 byte - 0x0001
+4 byte - 0x017C (D section data offset)
+4 byte - 0x01C0 (D section data offset 2)
+2 byte - 0x02
+2 byte - 0x02 always
+2 byte - 0x02 always
+2 byte - 0x06
+2 byte - 0x01 always
+2 byte - 0x01 always
+
+0x0000, 0x04, 0x2A, 0x322
+
+D Section Part 1
+Length 0x44 (68)
+Usually starts with 0x4000
+Always ends with 8 bytes of padding
+
+Each D1 section begins with a series of incresing 2-byte integers until a 0x00 termination.
+These seem like bookmarks. For the example listed below (TB id 0x3C7) these integers are as follows:
+0x0004 (4)
+0x002A (42)
+These numbers are super large and probably don't represent offsets within either d section. They could represent asm offsets, however.
+
+D Section Part 2
+Length 0xF4 (244)
+
+Commonly repeated characters:
+0x55
+
+Here's another great example:
+Offset 0x004D2820
+-- -- TEXTBLOCK #000003C7: A(0000035C) HC(00000018) HE(000000C4) HD(000001F8) Z(00000000)
+-- -- -- D BLOCK O(00000001) D1(00000214) D2(00000260) DV[02,02,02,07,10,10]
+D1 Length: 004C, D2 Length: 00FC
+D1 Block
+0x0000 | 04 00 2A 00 4C 03 00 00 | 84 94 0C 0D D7 01 00 00 |
+0x0010 | D8 90 0C 0D A8 00 00 00 | 84 8E 0C 0D 00 00 00 00 |
+0x0020 | 7A 8B 0C 0D 00 00 00 00 | 00 00 00 00 F7 02 00 00 |
+0x0030 | F1 93 0C 0A 7A 02 00 00 | B3 90 0C 0C 39 01 00 00 |
+0x0040 | ED 8F 0C 0D 00 00 00 00 | 00 00 00 00
+D2 Block
+0x0000 | 5C 55 54 C1 FD 0D 1D 35 | E8 D0 0D 0D 61 37 34 18 |
+0x0010 | 75 43 C3 0D DD 90 70 43 | B7 06 3A 54 77 D0 F8 4A |
+0x0020 | 3D 43 70 90 1C 1C 0C C6 | D3 F8 58 8C D5 0F 31 DC |
+0x0030 | D8 0C 8D 8D 55 51 F3 FD | 3A 57 14 8C 9A 41 73 D0 |
+0x0040 | EB 10 DE 10 0C 8D AD 97 | 62 57 F0 8D C3 8F 43 18 |
+0x0050 | C6 51 43 30 54 55 55 D0 | FF FF DD 50 D5 D0 30 F4 |
+0x0060 | 37 0D 43 55 D3 0C FD 5C | 55 D5 D4 DF DF D4 D4 70 |
+0x0070 | 53 53 43 CE 38 03 C4 8C | 4D 55 45 8D F7 0D 59 D4 |
+0x0080 | D0 E5 0F 0D 0D CD 0D 0D | CD 0D 0D 4D 43 43 43 DF |
+0x0090 | 3A 34 15 1C 0C CD A0 83 | CE 05 17 CC F0 F4 00 55 |
+0x00A0 | 55 E1 7F FF 33 35 33 35 | 33 35 63 54 C5 D0 D0 3F |
+0x00B0 | 37 34 63 43 33 36 34 43 | 55 55 49 FF FF 3F 54 55 |
+0x00C0 | C5 FF FF 33 33 33 33 33 | 33 33 53 54 55 55 D1 FF |
+0x00D0 | FF 33 F3 0C 31 56 55 85 | FF FD 8F 55 15 D3 FF 4F |
+0x00E0 | 55 55 15 F4 F0 F0 37 0C | 51 3C 46 31 EA D0 0C 06 |
+0x00F0 | 43 53 90 30 59 C1 F0 FC | 0F 00 00 00
+Counter =  2
+0x0000 | 52 16 F0 FF C0 00 70 3C | 48 16 F0 FF A4 05 70 3C |
+0x0010 |
+
+End block structure:
+
+2-bytes, 0xF0FF, 2-bytes, dialog-id
+The bytes before f0ff always increase, no pattern in other bytes
+
+////////////////////////////////////////////////
+//            MEMORY INVESTIGATION            //
+////////////////////////////////////////////////
+
+Looking in debug memory, set at breakpoint 0x8008EBA4
+
+0x006C Info
+-----------
+Offset,Diff,Zero'd
+0x0018,0x18,0x0000
+0x0047,0x2F,0x002F
+0x0055,0x0E,0x003D
+0x00CA,0x75,0x00B2
+0x00F4,0x2A,0x00DC
+0x0103,0x0F,0x00EB
+0x012B,0x28,0x0113
+0x0184,0x59,0x016C
+0x01A1,0x1D,0x0189
+0x01DF,0x3E,0x01C7
+0x01F2,0x13,0x01DA
+
+0x8018DB24 (r5 + [@r5 + 0Ch]) - D-header information
+@(r5 + [@r5 + 0Ch]) + 00h = One
+@(r5 + [@r5 + 0Ch]) + 04h = D1 Offset
+@(r5 + [@r5 + 0Ch]) + 08h = D2 Offset
+@(r5 + [@r5 + 0Ch]) + 0Ch = DV[0]
+@(r5 + [@r5 + 0Ch]) + 0Eh = DV[1]
+@(r5 + [@r5 + 0Ch]) + 10h = DV[2]
+@(r5 + [@r5 + 0Ch]) + 12h = DV[3]
+@(r5 + [@r5 + 0Ch]) + 14h = DV[4]
+@(r5 + [@r5 + 0Ch]) + 16h = DV[5]
+@(r5 + [@r5 + 0Ch]) + 18h = DV[6]
+
+0x8018DDF8 (end of loaded textblock data) - Looks like an array of shift-jis byte pairs (MAYBE)
+
+Starting at 0x8018DFD8 (how does one calculate this idk) there are 11 (!) entries that look like this:
+
+Weird 11 Blocks (0x8018DFD8) (some data is identical for each, omitted here)
+     A,     B,   C,         D,   E,   F,   G,     H,     I
+0x0000,0x0000,0xA1,0x002C8611,0xD7,0x0E,0x03,0xFE0C,0x02BC -- yes (2) or no (4)
+0x0001,0x0222,0x03,0x002C8711,0xCC,0x0E,0x04,0xFE0C,0x01F4 -- goto (3)
+0x0000,0x0000,0xA1,0x002C8611,0xCC,0x0E,0x09,0xFD44,0xF95C
+0x0001,0x0220,0x6E,0x002C8611,0xCC,0x0E,0x0A,0xFD44,0xFA24 -- goto (3)
+0x0000,0x0000,0xA1,0x002C8611,0xD7,0x0E,0x0B,0xFE0C,0xF894
+0x0000,0x0000,0xA1,0x002C8611,0xCC,0x0E,0x0C,0xFED4,0xF894
+0x0001,0x0221,0x74,0x00288611,0xB3,0x12,0x06,0xFD33,0xF7CC
+0x0000,0x0000,0xA1,0x00288611,0xAB,0x12,0x07,0xFD44,0xF894
+0x0000,0x0000,0xA1,0x00288611,0xAB,0x12,0x08,0xFE0C,0xF7CC
+0x0000,0x0000,0xA1,0x00288611,0xAB,0x12,0x0D,0xFE0C,0xF95C
+0x0000,0x0000,0xA1,0x00288611,0xAB,0x12,0x0E,0xFED4,0xF95C
+
+Example of the first block (40-bytes):
+8018DFD8 - 0000 0000 -- A,B
+8018DFDC - 0000 00A1 -- C
+8018DFE0 - 002C 8611 -- D
+8018DFE4 - 00D7 000E -- E,F
+8018DFE8 - 0003 0000 -- G
+8018DFEC - FFFF 0000 -- Always the same
+8018DFF0 - FFFF FFFF -- Always the same
+8018DFF4 - 0000 FE0C -- H
+8018DFF8 - 0000 02BC -- I
+8018DFFC - 0000 0000 -- Always the same
+
+Addresses to check out:
+------------
+
+Seen at 0x8018E1EC
+0x8018DF6C - 3 "0805/4" blocks
+0x8018E644 - Some kind of data structure here... unclear if it has meaning
+0x8018DFD8 - start of weird 11 blocks
+0x8018D748 - looks like 4 shorts (32,1,1,144) maybe "0x20 + 010190" referencing 0x80010190
+0x8018DDF8 - Start of weird shift-jis chars
