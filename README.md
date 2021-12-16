@@ -14,14 +14,16 @@ My goal here is to get at least an accessible foundation for translation started
 * [DONE] Convert Android English Text to Correct Format
 * [WIP] Create script that guesses translation based on text similarity
 * [DONE] Write Huffman Encode Functionality
-* Write Textblock Modification Functionality
-* Calculate Pointer Mod Values
-* [WIP] Write ASM Generator for Pointer Redirection
-* Write Binary Patcher for SLPM_869.16
+* [WIP] Write Textblock Modification Functionality
+* ~~Calculate Pointer Mod Values~~
+* ~~[WIP] Write ASM Generator for Pointer Redirection~~
+* ~~Write Binary Patcher for SLPM_869.16~~
+* Figure out DQ scripting language structure
 * Actually patch all the dialog in DQ4 :)
-* Write DQ LZS Algorithm
+* [DONE] Write DQ LZS Decompression
+* Write DQ LZS Compression
 * Extract all TIM Files
-* Write Patcher for TIM Files 
+* Write Patcher for TIM Files
 * Figure out where every other bit of dialog is
 * ... TBD
 * Make a cute intro
@@ -187,7 +189,7 @@ First I looked into the "E" block. This contains two offsets which point us to t
 | E2 | 4 bytes | Length of Huffman Tree |
 | E3 | 2 bytes | Number of Nodes in Huffman Tree |
 
-### D Section
+### D Section - Probably not useful!!
 
 The D section is very interesting. First of all, it only exists when the "one" value of the text block header is 1, otherwise there's no d-block. The begining of the D section is a header that's 28 bytes long. 
 
@@ -203,9 +205,11 @@ The D section is very interesting. First of all, it only exists when the "one" v
 | 0x14 | 4 | Always 0x10 |
 | 0x16 | 4 | Always 0x10 |
 
-The first data section looks very structured. Every bit in the 0x07, 0x08, 0x0E and 0x0F position is zero. It nearly always ends in 8 bytes of padding. Using the 4th value of the d section header, we can read a list of offsets which gradually increase. The first offset is where the data starts, and if we account for the 16 bytes of termination, we can count the number of 8-byte (or 32-bit) entries which have a similar structure. The 7th entry of the d section header is exactly the number of entries if the 4th value is 2. It is slightly less otherwise. The offsets always correspond to an area of all 0's in the section.
+The first data section (D1 Block) looks very structured. Every bit in the 0x07, 0x08, 0x0E and 0x0F position is zero. It nearly always ends in 8 bytes of padding. Using the 4th value of the d section header, we can read a list of offsets which gradually increase. The first offset is where the data starts, and if we account for the 16 bytes of termination, we can count the number of 8-byte (or 32-bit) entries which have a similar structure. The 7th entry of the d section header is exactly the number of entries if the 4th value is 2. It is slightly less otherwise. The offsets always correspond to an area of all 0's in the section.
 
-The second section is fairly random. Consistently there seem to be a lot of occurances of 0x55, but that could be coincidence.
+The D1 block can be parsed partially by reading the starting offsets one by one and extracting the data in each block. Each subblock of the D1 block is further seperated into "entries" which contain a 4-byte integer and a 4-byte chunk of data. Each subblock is padded with 8-bytes of zeros. The 4-byte integers of each entry gradually decends until it finally reaches zero. The other bit of information is interesting and likely represents some kind of instruction. A large chunk of them begin with 0x0D0C. It is possible that the 4-byte integers represent bit level offsets in the D2 block, however since the sections of D1 have counters that start over, I have reason to suspect that.
+
+The second section (D2 Block) is fairly random. Consistently there seem to be a lot of occurances of 0x55, but that could be coincidence.
 
 The "dummy" (ダミー) blocks have d sections that are just zero'd out stubs and don't follow either of the above rules.
 
@@ -252,6 +256,14 @@ D Vals = [02,02,02,08,10,10]
 0x0110 | 54 55 55 D1 AA EA 4F 7D | DF 5C 55 CD 7D DF 5C 55 |
 0x0120 | CD F0 FD 53 55 55 45 FF | FF 3F 00 00
 ```
+
+## DQ Scripting Language
+
+There is a sort of scripting language found in sub-blocks with type 39. A lot of these are compressed with DQ's variant of LZS. Once decompressed the blocks have "commands" seperated typically by `0xB401`.
+
+These blocks contain commands that start with `0x00C021A0` and are followed by two 2-byte arguments, a bit offset in the huffman code and the scene ID they're associated with.
+
+Unfortunately these seem out of order and they don't always follow this pattern so more investigation is necessary.
 
 ## Credits
 

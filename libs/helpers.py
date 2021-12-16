@@ -12,16 +12,27 @@ def byteSlice( data, start, end, decode=True ):
     else:
         return rData
 
+def toAscii( hex ):
+    if hex >= 32 and hex < 127:
+        return chr(hex)
+    elif hex == 0:
+        return '.'
+    else:
+        return '#'
+
 def printHex( hex ):
     idx = 0
     print( "0x0000 | ", end='')
+    asciiBuff = ''
     for v in list(hex):
         print( "%02X " % v, end='')
+        asciiBuff += toAscii(v)
         idx+=1
         if( idx%8==0 ):
             print("| ", end='')
         if( idx%16==0 ):
-            print("\n0x%04X | " % idx, end='')
+            print("%s\n0x%04X | " % (asciiBuff, idx), end='')
+            asciiBuff = ''
     print('')
 
 def writeHex( fh, hex ):

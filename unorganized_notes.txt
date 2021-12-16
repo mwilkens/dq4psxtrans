@@ -78,14 +78,17 @@ D section header (28 bytes long):
 
 D Section Part 1
 Length 0x44 (68)
-Usually starts with 0x4000
+Usually starts with 0x0400
 Always ends with 8 bytes of padding
 
-Each D1 section begins with a series of incresing 2-byte integers until a 0x00 termination.
+Each D1 section begins with a series of incresing 2-byte integers.
 These seem like bookmarks. For the example listed below (TB id 0x3C7) these integers are as follows:
 0x0004 (4)
 0x002A (42)
-These numbers are super large and probably don't represent offsets within either d section. They could represent asm offsets, however.
+These correspond to sections of the D1 block. The first is the offset to the first bit of data.
+The second points to the second section, and so on.
+
+
 
 D Section Part 2
 Length 0xF4 (244)
@@ -131,6 +134,25 @@ End block structure:
 The bytes before f0ff always increase, no pattern in other bytes
 
 ////////////////////////////////////////////////
+//             FIRST DIALOG BLOCK             //
+////////////////////////////////////////////////
+
+In resource file this starts at offset: 0x0D017180
+
+From script we can parse the header like so:
+-- -- TEXTBLOCK #0000006C: A(00000688) HC(00000018) HE(00000200) HD(000003BC) Z(00000000)
+-- -- -- D BLOCK O(00000001) D1(000003D8) D2(00000464) DV[0002,0002,0002,000F,0010,0010] 
+D1 Length: 008C, D2 Length: 0224
+
+This gives us offsets like this:
+
+Huffman Code - 0x0D017198
+E Block      - 0x0D017380
+Huffman Tree - 0x0D01738A
+D Block      - 0x0D01753C
+End "A"      - 0x0D017808
+
+////////////////////////////////////////////////
 //            MEMORY INVESTIGATION            //
 ////////////////////////////////////////////////
 
@@ -138,6 +160,10 @@ Looking in debug memory, set at breakpoint 0x8008EBA4
 
 0x006C Info
 -----------
+
+First looking into the big offsets from the japanese dialog, we can start to search for some of these
+hex values in memory. If these are found they can be changed on the fly. Diff'd and starting at zero,
+just in case they show up like that in memory.
 Offset,Diff,Zero'd
 0x0018,0x18,0x0000
 0x0047,0x2F,0x002F
@@ -162,6 +188,13 @@ Offset,Diff,Zero'd
 @(r5 + [@r5 + 0Ch]) + 14h = DV[4]
 @(r5 + [@r5 + 0Ch]) + 16h = DV[5]
 @(r5 + [@r5 + 0Ch]) + 18h = DV[6]
+
+Something fascinating is that the game does NOT appear to be loading the resource block directly into memory.
+This can be clearly seen at 0x8018DBCC where there's 4 bytes of padding between D1 and D2, but in the resource
+file there are 8 bytes of padding.
+This is also true at the end of the loaded D2 block, where there's no padding between the end and the value "A"
+where there definitely is in the resource file.
+I suspect this will make injecting a pointer redirection table into the resource file challenging.
 
 0x8018DDF8 (end of loaded textblock data) - Looks like an array of shift-jis byte pairs (MAYBE)
 
