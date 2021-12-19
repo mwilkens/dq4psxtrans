@@ -191,7 +191,7 @@ First I looked into the "E" block. This contains two offsets which point us to t
 
 ### D Blocks
 
-While understanding these further might be necessary, for now these are being tabled. You can read my notes in my [d block notes](dblock.md)
+While understanding these further might be necessary, for now these are being tabled. You can read more in [dblock.md](dblock.md).
 
 ## DQ Scripting Language
 
@@ -216,6 +216,9 @@ b1 <3 bytes>
 b2 <3 bytes>
     00 434343 (or more generally 00 xyxyxy, etc unclear what these 3 repeated bytes are)
 ```
+
+Here is an example of a [full script](26046-6.txt).
+
 
 Subblocks might only contain part of a script, as some end in non-terminated `b1` blocks. Full scripts end in a long series of 4-byte integers.
 
