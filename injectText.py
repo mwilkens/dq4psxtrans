@@ -1,7 +1,6 @@
 # Script for Working With DQ4 Data
 from libs.blockDefs import *
 from autoTranslator import getTranslation
-from libs.lzs import decompress
 import io
 
 with open("HBD1PS1D.Q41", "rb") as dq4b:
@@ -117,27 +116,13 @@ with open("HBD1PS1D.Q41", "rb") as dq4b:
                 dataLeft -= ( sb.compLength )
             # Script block!!!
             elif numBlocks == 26046 and sb.type == 39:
-                print( i )
+                print( f"{numBlocks} - {sb.id}" )
                 sb.printBlockInfo()
-                sbBody_c = dq4b.read( sb.compLength )
-                if sb.flags == 1280:
-                    sbBody = decompress( sbBody_c, sb.length)
-                else:
-                    sbBody = sbBody_c
-                printHex( sbBody )
+                scb = ScriptBlock()
 
-                isComm = False
-                c = b''
-                for hex in sbBody:
-                    if not isComm and hex == 0xB4:
-                        isComm = True
-                    else:
-                        if hex == 0xB4:
-                            isComm = False
-                            print(c.hex())
-                            c = b''
-                            continue
-                        c += hex.to_bytes(1, byteorder='little')
+                scb.parse( dq4b.read( sb.compLength ), sb )
+
+                print( scb.info )
 
                 dataLeft -= ( sb.compLength )
             else:

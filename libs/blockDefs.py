@@ -1,6 +1,7 @@
 from itertools import count
 from libs.huffman import *
 from libs.helpers import *
+from libs.lzs import decompress
 
 # Data Class for 2048 byte blocks
 class Block:
@@ -259,3 +260,143 @@ class TextBlock:
         buffer.extend( self.end_block)
 
         return buffer
+
+# Data Class for SubBlocks within Blocks
+class ScriptBlock:
+    def __init__(self, _id=0):
+        self.headerLen = 92
+
+        self.opCodes = {
+            'c01678': { 'raw': None, 'data': [], 'dataLen': [1], 'mod': None },
+            'c021a0': { 'raw': None, 'data': [], 'dataLen': [2,2], 'mod': None },
+            'c02678': { 'raw': None, 'data': [], 'dataLen': [3], 'mod': None },
+            'c02639': { 'raw': None, 'data': [], 'dataLen': [3], 'mod': None },
+            'c0263b': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
+            'c061a0': { 'raw': None, 'data': [], 'dataLen': [2], 'mod': None },
+            'c161a1': { 'raw': None, 'data': [], 'dataLen': [3], 'mod': None },
+            'c211a1': { 'raw': None, 'data': [], 'dataLen': [1], 'mod': None },
+            'c40678': { 'raw': None, 'data': [], 'dataLen': [1], 'mod': None },
+            'c821a0': { 'raw': None, 'data': [], 'dataLen': [2], 'mod': None },
+            
+            'e0063d': { 'raw': None, 'data': [], 'dataLen': [6], 'mod': None },
+            'e10300': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
+            'e10301': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
+            'e10302': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
+            'e10303': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
+            'e10305': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
+
+            'f1063a': { 'raw': None, 'data': [], 'dataLen': [2], 'mod': None },
+            'f421a0': { 'raw': None, 'data': [], 'dataLen': [6], 'mod': None },
+            'f761a0': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
+        }
+        '''
+        Opcodes:
+        -- Functions --
+        <c01678> <1 bytes> (<a0> keyword always follows, maybe starts a loop or conditional?)
+        <c021a0> <2 bytes> <2 bytes>
+        <c02678> <1 byte> <1 byte> <1 byte> <2 bytes>
+        <c02639> <3 bytes> (only seen 1 of these, related to c211a1)
+        <c0263b> <4 bytes> (only seen 1 of these, related to c02639)
+        <c061a0> <2 bytes> (always seen after c021a0 with dialog info)
+        <c161a1> <3 bytes> (some kind of address, often b8fbff or b8faff)
+        <c211a1> <1 bytes> (only seen 1 of these, related to c02639)
+        <c40678> <1 bytes> (only seen 1 of these)
+        <c821a0> <2 bytes> <2 bytes> (related to c40678 probably)
+        -- Subsection Commands --
+        <e0063d> <2 bytes>
+        <e10300> <no arg> 
+        <e10301> <no arg> 
+        <e10302> <no arg> 
+        <e10303> <no arg> 
+        <e10305> <no arg> 
+        -- Jump Commands --
+        <f1063a> <2 bytes> (absolutely related to the b keywords)
+        <f421a0> <4 bytes> <2 bytes> (2nd argument increases throughout script, goto command?)
+        <f761a0> <2 bytes> <2 bytes> (similar to f421a0 but 1st command is much larger)
+        -- Non-standard --
+        <434343> (called between b1 and b2 keywords)
+
+        Keywords:
+        <b0> (usually but not always seen with f1063a)
+        <b1> (start of major section)
+        <b2> (end of major section)
+        <b3> (separator of minor sections)
+        <b4> (some sort of separator, always followed by 01aX)
+        <a0> (found with c01678, seen in a lot of op-codes too so not sure about this one)
+        <01a0> (always found between commands)
+        <01a1> (always found between commands)
+        '''
+        self.keywords = [
+            'b0', 'b1', 'b2', 'b3', 'b4', 'a0', '01a0', '01a1'
+        ]
+
+        self.header = 0
+        self.body = 0
+
+        # Header Info
+        self.info = []
+        
+        # Body Script Tree
+        self.script = {}
+    
+    def parse(self, rawBlock, parent):
+        if parent.flags == 1280:
+            self.body = decompress( rawBlock, parent.length)
+        else:
+            self.body = rawBlock
+        self.parseHeader( self.body[:self.headerLen] )
+        self.parseBody( self.body[self.headerLen:] )
+    
+    def parseHeader(self, header):
+        self.header = header # save the byte version
+        data = [self.header[i:i+4] for i in range(0,len(self.header),4)]
+        for raw in data:
+            val = int.from_bytes(raw,byteorder='little')
+            self.info.append(val)
+    
+    def checkKeyword(self, buff, kwds):
+        strbuff = ''
+        for c in buff:
+            strbuff += f"{c:02x}"
+        for kwd in kwds:
+            invalidChar = False
+            if len(strbuff) != len(kwd):
+                continue
+            for i in range(len(strbuff)):
+                invalidChar = invalidChar or (strbuff[i]!=kwd[i] and kwd[i]!='*')
+            if not invalidChar:
+                return True,kwd
+        return False,strbuff
+
+    def parseBody(self, body):
+        return
+        self.body = body
+        print( len(body) )
+
+        buff = []
+
+        # First two characters always 0x00
+        body = body[1:]
+
+        for x in body:
+            print(f'{x:02X}')
+            buff.append(x)
+            if len(buff) == 1 or len(buff) == 2:
+                found, kwd = self.checkKeyword(buff, self.keywords)
+                if found:
+                    print( f"Found Keyword: {kwd}")
+                    buff = []
+                if len(buff) == 4 and not found:
+                    buff = []
+            if len(buff) == 3:
+                print( buff )
+                found, opc = self.checkKeyword(buff, self.opCodes.keys())
+                if found:
+                    print( f"Found OpCode: {opc}")
+                    buff = []
+                else:
+                    print( f"Invalid OpCode: {opc}")
+                    buff = []
+            if len(buff) > 3:
+                buff = []
+                return
