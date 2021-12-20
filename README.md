@@ -226,55 +226,81 @@ Finally here's my updated list of opcodes and keywords and my notes on them.
 
 ### Opcodes:
 
-**-- Functions --**
-| OpCode | Arguments | Notes |
-| ------ | --------- | ----- |
-| `c01678` | `<1 bytes>` | <a0> keyword always follows, maybe starts a loop or conditional? |
-| `c021a0` | `<2 bytes> <2 bytes>` | Used with dialog pointers, but definitely not always |
-| `c02678` | `<1 byte> <1 byte> <1 byte> <2 bytes>` | |
-| `c02639` | `<3 bytes>` | only seen 1 of these, related to `c211a1` |
-| `c0263b` | `<4 bytes>` | only seen 1 of these, related to `c02639` |
-| `c061a0` | `<2 bytes>` | always seen after `c021a0` with dialog info |
-| `c161a1` | `<3 bytes>` | some kind of address, often `b8fbff` or `b8faff` |
-| `c211a1` | `<1 bytes>` | only seen 1 of these, related to `c02639` |
-| `c40678` | `<1 bytes>` | only seen 1 of these |
-| `c821a0` | `<2 bytes> <2 bytes>` | related to `c40678` probably |
+There are a few types of op-codes that I've identified. They are listed below with notes:
 
-**-- Subsection Commands --**
-| OpCode | Arguments | Notes |
-| ------ | --------- | ----- |
-| `e0063d` | `<2 bytes>` | |
-| `e10300` | `<no arg>` | |
-| `e10301` | `<no arg>` | |
-| `e10302` | `<no arg>` | |
-| `e10303` | `<no arg>` | |
-| `e10305` | `<no arg>` | |
+| Type | Example | Notes |
+| ---- | ------- | ----- |
+| b-type | `B401A0` | These usually structure the code, not always 3-bytes in length |
+| c-type | `C021A0 <2 byte> <2 byte>` | These seem to relate to actual functions called (i.e. put dialog on screen) | 
+| d-type | `D021A0 <2 byte> <2 byte>` | VERY rare |
+| e-type | `E10301` | These normally begin the code blocks structured with `B3` |
+| f-type | `F421A0 <4 bytes> <2 byte label>` | These provide basic scripting structures "goto"/"if" |
+| weird | `434343` | Between `B2` and `B1` structure labels, I have no clue |
 
-**-- Jump Commands --**
-| OpCode | Arguments | Notes |
-| ------ | --------- | ----- |
-| `f1063a` | `<2 bytes>` | absolutely related to the b keywords
-| `f421a0` | `<4 bytes> <2 bytes>` | 2nd argument increases throughout script, goto command?
-| `f761a0` | `<2 bytes> <2 bytes>` | similar to `f421a0` but 1st command is much larger
+### Dialog Portion Analysis
 
--- Non-standard --
-| OpCode | Arguments | Notes |
-| ------ | --------- | ----- |
-| `434343` | | called between b1 and b2 keywords |
-| `585858` | | called between b1 and b2 keywords |
+Looking at a few places where dialog is placed on the screen there is a certain pattern that emerges:
 
-### Keywords:
+```
+C021A0 <bit offset> <dialog id>
+B401A0
+C061A0 <unknown> # usually 0x7801 or 0x78FA
+B401A0
+C021A0 <1FF> <0>
+B401A0
+```
 
-| Keyword | Arguments | Notes |
-| ------ | --------- | ----- |
-`b0` | None | usually but not always seen with f1063a
-`b1` | `<3 bytes>` | start of major section
-`b2` | `<3 bytes>` | end of major section
-`b3` | `<4 bytes>` | separater of minor sections
-`b4` | None | some sort of separator, always followed by 01aX
-`a0` | None | found with c01678, seen in a lot of op-codes too so not sure about this one
-`01a0` | None | always found between commands
-`01a1` | None | always found between commands
+This has been true of every dialog I've seen thus far, however I could be wrong.
+
+Additionally looking at the script code for the first line of dialog, we see a different block following.
+This I believe triggers the yes or no dialog box that appears after that line. The code looks like so:
+
+```
+C021A0 <1F7> <0>
+B401A0
+```
+
+Ok~ with that in mind, now we have a branch "yes" (はい) or "no" (いいえ).
+
+Lets dissect the dialog flow then look at the script with that in mind.
+
+Here's what this looks like:
+
+```
+Dialog 0xF91 (どうした？　Name。もう　降参かい？)
+Yes/No Box Shown.
+If Yes:
+     Dialog 0xEF9 (そうだな。今日は　このくらいに...)
+     Dialog 0xD0E (私の役目は　はやく　お前を...)
+If No:
+     Dialog 0xC28 (おお！！　なかなか頑張るな。)
+     Dialog 0xD0E (私の役目は　はやく　お前を...)
+```
+
+Ok then the code (simplified):
+
+```
+C021A0 <F91> <6C0> 
+C061A0 <FA78>
+C021A0 <1FF> <0> # Shows (どうした？　Name。もう　降参かい？)
+C021A0 <1F7> <0> # Shows yes/no box
+F421A0 <61A9> <1A> # Marker 1A + Goto Operation
+C021A0 <EF9> <6C0> 
+C061A0 <FA78>
+C021A0 <1FF> <0> # Shows (そうだな。今日は　このくらいに...)
+F1063A <1B> # Marker 1B
+C021A0 <C28> <6C0>
+C061A0 <FA78>
+C021A0 <1FF> <0> # Shows (おお！！　なかなか頑張るな。)
+C021A0 <D0E> <6C0>
+C061A0 <FA78>
+C021A0 <1FF> <0> # Shows (私の役目は　はやく　お前を...)
+```
+
+While I'm not entirely sure how this works, it seems that the F-type commands are jump/choice commands.
+
+The F-type commands have a second argument that have unique (usually increasing) values throughout the script.
+I suspect these are goto operations.
 
 ## Credits
 
