@@ -3,6 +3,8 @@ from libs.blockDefs import *
 from autoTranslator import getTranslation
 import io
 
+blockNum = 729
+
 with open("HBD1PS1D.Q41", "rb") as dq4b:
 
     print("== STARTING INJECTION ==")
@@ -30,7 +32,8 @@ with open("HBD1PS1D.Q41", "rb") as dq4b:
             bytesParsed -= 16
             numBlocks += int(bytesParsed/2048)
         #print( f"Num Blocks: {numBlocks}")
-        #b.printBlockInfo()
+        if numBlocks == blockNum:
+            b.printBlockInfo()
 
         # Calculate how much data is left based on sector size
         dataLeft = 2048 * b.sectors - 16
@@ -41,15 +44,26 @@ with open("HBD1PS1D.Q41", "rb") as dq4b:
             dataLeft -= 16
             sb = SubBlock(j)
             sb.parseHeader(sbHeader)
-            # sb.printBlockInfo()
+            if numBlocks == blockNum:
+                sb.printBlockInfo()
             # Add to this blocks SubBlock data
             b.subBlocks.append(sb)
 
         # Now we can go through the subblocks
         for sb in b.subBlocks:
             offset = 0
+
+            if (sb.type == 40 or sb.type == 42):
+                tbHeader = dq4b.read(24)
+                tb = TextBlock()
+                tb.parseHeader(tbHeader)
+                dq4b.seek(-24,1)
+                if tb.uuid == 0xEC:
+                    print( numBlocks )
+                    tb.printBlockInfo()
+
             # If we have a textblock, make a new obj
-            if False and (sb.type == 40 or sb.type == 42):
+            if numBlocks == blockNum and (sb.type == 40 or sb.type == 42):
                 tbHeader = dq4b.read(24)
                 tb = TextBlock()
                 tb.parseHeader(tbHeader)
@@ -57,7 +71,7 @@ with open("HBD1PS1D.Q41", "rb") as dq4b:
                 # go 24 bytes back, just so the offsets in the header still work
                 dq4b.seek(-24,1)
                 #print( "\nOffset 0x%08X" % dq4b.tell() )
-                #tb.printBlockInfo()
+                tb.printBlockInfo()
                 tbBody = dq4b.read( sb.compLength )
                 tb.parseBody( tbBody )
 
@@ -96,10 +110,10 @@ with open("HBD1PS1D.Q41", "rb") as dq4b:
                             adr = byteRead(d1d,(i*8)+4,4,decode=True)
                             print( "[%d] Num: %04X (%d) - Off: %08X" %(i, num, num, adr))
 
-                        printHex( d1d )
+                        #printHex( d1d )
                         last_off = coff
                     
-                    printHex(tb.d2)
+                    #printHex(tb.d2)
 
                 validDialog = False
                 for line in tb.decText:
@@ -115,14 +129,17 @@ with open("HBD1PS1D.Q41", "rb") as dq4b:
 
                 dataLeft -= ( sb.compLength )
             # Script block!!!
-            elif numBlocks == 26046 and sb.type == 39:
+            elif numBlocks == blockNum and sb.type == 39:
                 print( f"{numBlocks} - {sb.id}" )
                 sb.printBlockInfo()
                 scb = ScriptBlock()
 
                 scb.parse( dq4b.read( sb.compLength ), sb )
 
+                # scb.printScript()
+
                 print( scb.info )
+                scb.printScript()
 
                 dataLeft -= ( sb.compLength )
             else:

@@ -267,68 +267,88 @@ class ScriptBlock:
         self.headerLen = 92
 
         self.opCodes = {
-            'c01678': { 'raw': None, 'data': [], 'dataLen': [1], 'mod': None },
-            'c021a0': { 'raw': None, 'data': [], 'dataLen': [2,2], 'mod': None },
-            'c02678': { 'raw': None, 'data': [], 'dataLen': [3], 'mod': None },
-            'c02639': { 'raw': None, 'data': [], 'dataLen': [3], 'mod': None },
-            'c0263b': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
-            'c061a0': { 'raw': None, 'data': [], 'dataLen': [2], 'mod': None },
-            'c161a1': { 'raw': None, 'data': [], 'dataLen': [3], 'mod': None },
-            'c211a1': { 'raw': None, 'data': [], 'dataLen': [1], 'mod': None },
-            'c40678': { 'raw': None, 'data': [], 'dataLen': [1], 'mod': None },
-            'c821a0': { 'raw': None, 'data': [], 'dataLen': [2], 'mod': None },
-            
-            'e0063d': { 'raw': None, 'data': [], 'dataLen': [6], 'mod': None },
-            'e10300': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
-            'e10301': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
-            'e10302': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
-            'e10303': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
-            'e10305': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
+            'b401a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [0]  },
+            'b401a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [0]  },
 
-            'f1063a': { 'raw': None, 'data': [], 'dataLen': [2], 'mod': None },
-            'f421a0': { 'raw': None, 'data': [], 'dataLen': [6], 'mod': None },
-            'f761a0': { 'raw': None, 'data': [], 'dataLen': [4], 'mod': None },
+            'c01678': {'name': '', 'raw': None, 'data': [], 'dataLen': [1]  },
+            'c01639': {'name': '', 'raw': None, 'data': [], 'dataLen': [1]  }, # followed by a0
+            'c0163b': {'name': '', 'raw': None, 'data': [], 'dataLen': [2]  }, # followed by a0
+            'c0167b': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,1]  }, # followed by a0
+            'c021a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
+            'c021a3': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
+            'c02678': {'name': '', 'raw': None, 'data': [], 'dataLen': [1,1,1,2] },
+            'c02639': {'name': '', 'raw': None, 'data': [], 'dataLen': [3] },
+            'c0263b': {'name': '', 'raw': None, 'data': [], 'dataLen': [4] },
+            'c0267b': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2,3] },
+            'c026bb': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,3,3] },
+            'c061a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
+            'c061a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] }, # really not sure about this
+            'c161a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [3] },
+            'c211a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] }, # followed by a0
+            'c21678': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] }, # followed by a0
+            'c221a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [4] },
+            'c22678': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,3] },
+            'c261a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
+            'c30db0': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] },
+            'c31678': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] }, # followed by a0
+            'c321a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,4,2,1] },
+            'c361a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
+            'c40678': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] },
+            'c611a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] },
+            'c661a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
+            'c821a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
+            'c921a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
+
+            'd021a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
+
+            'e0063d': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
+            'e01bc0': {'name': '', 'raw': None, 'data': [], 'dataLen': [9] }, # very weird one
+            'e10300': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            'e10301': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            'e10302': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            'e10303': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            'e10304': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            'e10305': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            'e10306': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            'e20501': {'name': '', 'raw': None, 'data': [], 'dataLen': [1,2] },
+            'e20502': {'name': '', 'raw': None, 'data': [], 'dataLen': [1,2] },
+            'e20504': {'name': '', 'raw': None, 'data': [], 'dataLen': [1,2] },
+            'e2050a': {'name': '', 'raw': None, 'data': [], 'dataLen': [1,2] },
+            'e2050e': {'name': '', 'raw': None, 'data': [], 'dataLen': [1,2] },
+
+            'f1063a': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
+            'f321a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
+            'f421a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
+            'f461a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
+            'f511a3': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
+            'f521a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
+            'f561a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
+            'f711a3': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
+            'f721a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
+            'f761a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
+
+            '434343': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            '585858': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
         }
-        '''
-        Opcodes:
-        -- Functions --
-        <c01678> <1 bytes> (<a0> keyword always follows, maybe starts a loop or conditional?)
-        <c021a0> <2 bytes> <2 bytes>
-        <c02678> <1 byte> <1 byte> <1 byte> <2 bytes>
-        <c02639> <3 bytes> (only seen 1 of these, related to c211a1)
-        <c0263b> <4 bytes> (only seen 1 of these, related to c02639)
-        <c061a0> <2 bytes> (always seen after c021a0 with dialog info)
-        <c161a1> <3 bytes> (some kind of address, often b8fbff or b8faff)
-        <c211a1> <1 bytes> (only seen 1 of these, related to c02639)
-        <c40678> <1 bytes> (only seen 1 of these)
-        <c821a0> <2 bytes> <2 bytes> (related to c40678 probably)
-        -- Subsection Commands --
-        <e0063d> <2 bytes>
-        <e10300> <no arg> 
-        <e10301> <no arg> 
-        <e10302> <no arg> 
-        <e10303> <no arg> 
-        <e10305> <no arg> 
-        -- Jump Commands --
-        <f1063a> <2 bytes> (absolutely related to the b keywords)
-        <f421a0> <4 bytes> <2 bytes> (2nd argument increases throughout script, goto command?)
-        <f761a0> <2 bytes> <2 bytes> (similar to f421a0 but 1st command is much larger)
-        -- Non-standard --
-        <434343> (called between b1 and b2 keywords)
 
-        Keywords:
-        <b0> (usually but not always seen with f1063a)
-        <b1> (start of major section)
-        <b2> (end of major section)
-        <b3> (separator of minor sections)
-        <b4> (some sort of separator, always followed by 01aX)
-        <a0> (found with c01678, seen in a lot of op-codes too so not sure about this one)
-        <01a0> (always found between commands)
-        <01a1> (always found between commands)
-        '''
-        self.keywords = [
-            'b0', 'b1', 'b2', 'b3', 'b4', 'a0', '01a0', '01a1'
-        ]
+        self.keywords = {
+            'b0':   {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            'b1':   {'name': '', 'raw': None, 'data': [], 'dataLen': [4] }, # Technically 3 but I'll include the following 0x00
+            'b2':   {'name': '', 'raw': None, 'data': [], 'dataLen': [4] }, # Technically 3 but I'll include the following 0x00
+            'b3':   {'name': '', 'raw': None, 'data': [], 'dataLen': [5] }, # Similar story here
+            # 'b4':   {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            'b5':   {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            'a0':   {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            '01a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            '01a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            '01a4': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            '0000': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            '1000': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            '2000': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            '3000': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            'ffff': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            '00': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] }
+        }
 
         self.header = 0
         self.body = 0
@@ -337,7 +357,7 @@ class ScriptBlock:
         self.info = []
         
         # Body Script Tree
-        self.script = {}
+        self.script = []
     
     def parse(self, rawBlock, parent):
         if parent.flags == 1280:
@@ -369,34 +389,105 @@ class ScriptBlock:
         return False,strbuff
 
     def parseBody(self, body):
-        return
         self.body = body
-        print( len(body) )
 
         buff = []
 
         # First two characters always 0x00
-        body = body[1:]
+        #body = body[1:]
 
+        fill = False
+        filledBytes = 0
+        entry = None
+
+        offset = 0
         for x in body:
-            print(f'{x:02X}')
-            buff.append(x)
-            if len(buff) == 1 or len(buff) == 2:
-                found, kwd = self.checkKeyword(buff, self.keywords)
-                if found:
-                    print( f"Found Keyword: {kwd}")
+            #print(f'{x:02X}')
+
+            # In this mode we scan for commands/keywords
+            if not fill:
+                buff.append(x)
+
+                if len(buff) == 1 or len(buff) == 2:
+                    found, kwd = self.checkKeyword(buff, self.keywords.keys())
+                    if found:
+                        #print( f"Found Keyword: {kwd}")
+                        entry = self.keywords[kwd].copy()
+                        entry['name'] = kwd
+                        entry['data'] = []
+                        entry['raw'] = bytearray(buff)
+                        filledBytes = 0
+                        if entry['dataLen'] == [0]:
+                            self.script.append(entry)
+                            #print(entry['name'])
+                            fill = False
+                        else:      
+                            fill = True
+                        buff = []
+                    if len(buff) == 4 and not found:
+                        buff = []
+                if len(buff) == 3:
+                    found, opc = self.checkKeyword(buff, self.opCodes.keys())
+                    if found:
+                        #print( f"Found OpCode: {opc}")
+                        entry = self.opCodes[opc].copy()
+
+                        # This is usually the end
+                        # for now I'll just end things here
+                        #if opc == '585858':
+                        #    return
+                        
+                        entry['name'] = opc
+                        entry['data'] = []
+                        entry['raw'] = bytearray(buff)
+                        filledBytes = 0
+                        if entry['dataLen'] == [0]:
+                            self.script.append(entry)
+                            #print(entry['name'])
+                            fill = False
+                        else:      
+                            fill = True
+                        buff = []
+                    else:
+                        #print( f"Invalid OpCode: {opc}", end='')
+                        #print( f" Following Bytes {body[offset-18:offset+18].hex()}")
+                        return
+                        buff = []
+                if len(buff) > 3:
                     buff = []
-                if len(buff) == 4 and not found:
-                    buff = []
-            if len(buff) == 3:
-                print( buff )
-                found, opc = self.checkKeyword(buff, self.opCodes.keys())
-                if found:
-                    print( f"Found OpCode: {opc}")
-                    buff = []
-                else:
-                    print( f"Invalid OpCode: {opc}")
-                    buff = []
-            if len(buff) > 3:
-                buff = []
-                return
+                    print( f"Something went wrong: {buff}", end='')
+                    return
+            # Here we'll fill the data
+            else:
+                entry['raw'].append( x )
+                filledBytes += 1
+
+                # check to see if we've filled the raw data
+                if filledBytes >= sum(entry['dataLen']):
+                    idx = len(entry['name'])>>1
+                    for i in entry['dataLen']:
+                        entry['data'].append( entry['raw'][idx:idx+i] )
+                        idx = idx+i
+                    self.script.append(entry)
+                    filledBytes = 0
+                    fill = False
+            offset += 1
+
+    def printScript( self ):
+        indentLevel = 0
+        for entry in self.script:
+            if entry['name'] == 'b2':
+                indentLevel -= 2
+            elif entry['name'] == 'b3':
+                indentLevel -= 1
+            for i in range(indentLevel):
+                print('\t',end='')
+            print(entry['name'], end='')
+            for e in entry['data']:
+                print( f" ({int.from_bytes(e,byteorder='little'):X})", end='' )
+            print(f" - {entry['raw'].hex()}")
+            if entry['name'] == 'b1':
+                indentLevel += 2
+            elif entry['name'] == 'b3':
+                indentLevel += 1
+            entry = None

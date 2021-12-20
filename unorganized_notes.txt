@@ -235,3 +235,63 @@ Seen at 0x8018E1EC
 0x8018DFD8 - start of weird 11 blocks
 0x8018D748 - looks like 4 shorts (32,1,1,144) maybe "0x20 + 010190" referencing 0x80010190
 0x8018DDF8 - Start of weird shift-jis chars
+
+
+////////////////////////////////////////////////
+//              SCRIPT STRUCTURE              //
+////////////////////////////////////////////////
+
+Looking at a few places where dialog is placed on the screen there is a certain pattern that emerges:
+
+C021A0 <bit offset> <dialog id>
+B401A0
+C061A0 <unknown> # usually 0x7801 or 0x78FA
+B401A0
+C021A0 <1FF> <0>
+B401A0
+
+This has been true of every dialog I've seen thus far, however I could be wrong.
+
+Additionally looking at the script code for the first line of dialog, we see a different block following.
+This I believe triggers the yes or no dialog box that appears after that line. The code looks like so:
+
+C021A0 <1F7> <0>
+B401A0
+
+Ok~ with that in mind, now we have a branch "yes" (はい) or "no" (いいえ).
+
+Lets dissect the dialog flow then look at the script with that in mind.
+
+Here's what this looks like:
+
+Dialog 0xF91 (どうした？　Name。もう　降参かい？)
+Yes/No Box Shown.
+If Yes:
+     Dialog 0xEF9 (そうだな。今日は　このくらいに...)
+     Dialog 0xD0E (私の役目は　はやく　お前を...)
+If No:
+     Dialog 0xC28 (おお！！　なかなか頑張るな。)
+     Dialog 0xD0E (私の役目は　はやく　お前を...)
+
+Ok then the code (simplified):
+
+C021A0 <F91> <6C0> 
+C061A0 <FA78>
+C021A0 <1FF> <0> # Shows (どうした？　Name。もう　降参かい？)
+C021A0 <1F7> <0> # Shows yes/no box
+F421A0 <61A9> <1A> # Marker 1A + Goto Operation
+C021A0 <EF9> <6C0> 
+C061A0 <FA78>
+C021A0 <1FF> <0> # Shows (そうだな。今日は　このくらいに...)
+F1063A <1B> # Marker 1B
+C021A0 <C28> <6C0>
+C061A0 <FA78>
+C021A0 <1FF> <0> # Shows (おお！！　なかなか頑張るな。)
+C021A0 <D0E> <6C0>
+C061A0 <FA78>
+C021A0 <1FF> <0> # Shows (私の役目は　はやく　お前を...)
+
+While I'm not entirely sure how this works, it seems that the F-type commands are jump/choice commands.
+
+The F-type commands have a second argument that have unique (usually increasing) values throughout the script.
+I suspect these are goto operations.
