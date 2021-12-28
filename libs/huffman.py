@@ -15,7 +15,7 @@ def parseTree( switch, offset, curNode, bytes):
         temp[0] = parseTree( 0, offset, node, bytes)
         temp[1] = parseTree( 1, offset, node, bytes)
         return temp
-    elif( hByte == 0x7F ):
+    elif( hByte == 0x7F or hByte == 0x7E ):
         return "{%02x%02x}" % (hByte, lByte)
     elif(hByte == 0 and lByte == 0):
         return "{0000}"

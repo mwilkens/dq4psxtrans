@@ -67,10 +67,12 @@ class SubBlock:
 class TextBlock:
     #TODO: Add data offset
     headerLen = 24
-    def __init__(self, _id=0):
+    def __init__(self, subblock):
 
-        self.header = 0
-        self.body = 0
+        self.id = subblock.id
+
+        self.header = subblock.data[:24]
+        self.body = subblock.data # data is header + body
 
         # Main Block
         self.a = 0
@@ -91,10 +93,11 @@ class TextBlock:
         self.hufftree = []
         self.encHuffTree = 0
         self.decText = {}
+
+        self.parseHeader()
     
-    def parseHeader(self, header):
-        self.header = header # save the byte version
-        header = int.from_bytes(header,byteorder='little')
+    def parseHeader(self):
+        header = int.from_bytes(self.header,byteorder='little')
         self.a_off = ( header & 0xFFFFFFFF )
         header = header >> 32
         self.uuid = ( header & 0xFFFFFFFF )
@@ -125,16 +128,15 @@ class TextBlock:
             self.d_var[0],self.d_var[1],self.d_var[2],self.d_var[3],self.d_var[4],self.d_var[5]) )
         print( "D1 Length: %04X, D2 Length: %04X" % (self.d2_off - self.d1_off, self.a_off - self.d2_off ))
 
-    def parseBody( self, body ):
-        self.body = body
+    def parse( self ):
         # Calculate A, this will be the same as a_off if everything worked right :)
-        self.a = byteRead( body, self.a_off, 2, decode=False )
+        self.a = byteRead( self.body, self.a_off, 2, decode=False )
         # This is the text itself, but huffman encoded
-        self.encData = byteSlice( body, self.huff_c, self.huff_e, decode=False )
+        self.encData = byteSlice( self.body, self.huff_c, self.huff_e, decode=False )
         # Not sure what these are, but they could be important
-        self.e1 = byteRead( body, self.huff_e, 4 )
-        self.e2 = byteRead( body, self.huff_e+4, 4 )
-        self.e3 = byteRead( body, self.huff_e+8, 2 )
+        self.e1 = byteRead( self.body, self.huff_e, 4 )
+        self.e2 = byteRead( self.body, self.huff_e+4, 4 )
+        self.e3 = byteRead( self.body, self.huff_e+8, 2 )
         
         # Occasionally d is zero, which means we need to set d to a
         self.d_a = None
@@ -142,13 +144,13 @@ class TextBlock:
             self.huff_d = self.a_off
         else:
             # If we do have d, we can extract this range, not sure what it is though
-            self.d_a = byteSlice( body, self.huff_d, self.a_off, decode=False )
-            self.dheader = byteRead( body, self.huff_d, 28 )
+            self.d_a = byteSlice( self.body, self.huff_d, self.a_off, decode=False )
+            self.dheader = byteRead( self.body, self.huff_d, 28 )
             self.parseDHeader( self.dheader )
             #self.printDHeader()
 
-            self.d1 = byteSlice( body, self.d1_off, self.d2_off, decode=False )
-            self.d2 = byteSlice( body, self.d2_off, self.a_off, decode=False )
+            self.d1 = byteSlice( self.body, self.d1_off, self.d2_off, decode=False )
+            self.d2 = byteSlice( self.body, self.d2_off, self.a_off, decode=False )
 
             '''if( self.d2_off - self.d1_off < 0x50 ):
                 print("D1 Block")
@@ -157,11 +159,11 @@ class TextBlock:
                 printHex( self.d2 )'''
         
         # Read to the end of the block
-        self.end_counter = byteRead( body, self.a_off+4, 4 )
-        self.end_block = byteRead( body, self.a_off+8, self.end_counter * 8, decode=False )
+        self.end_counter = byteRead( self.body, self.a_off+4, 4 )
+        self.end_block = byteRead( self.body, self.a_off+8, self.end_counter * 8, decode=False )
         
         # This is the actual huffman tree
-        self.encHuffTree = byteSlice( body, self.huff_e+10, self.huff_d, decode=False )
+        self.encHuffTree = byteSlice( self.body, self.huff_e+10, self.huff_d, decode=False )
         
         self.hufftree = makeHuffTree( self.encHuffTree )
         self.decText = decodeHuffman( self.huff_c, self.encData, self.hufftree )
@@ -263,10 +265,23 @@ class TextBlock:
 
 # Data Class for SubBlocks within Blocks
 class ScriptBlock:
-    def __init__(self, _id=0):
+    def __init__(self, subblock):
         self.headerLen = 92
 
         self.raw = None
+        self.header = None
+        self.body = None
+
+        # Header Info
+        self.info = []
+        
+        # Body Script Tree
+        self.script = []
+
+        if subblock.flags == 1280:
+            self.raw = decompress( subblock.data, subblock.length )
+        else:
+            self.raw = subblock.data
 
         self.opCodes = {
             'b401a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [0]  },
@@ -352,20 +367,6 @@ class ScriptBlock:
             '00': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] }
         }
 
-        self.header = 0
-        self.body = 0
-
-        # Header Info
-        self.info = []
-        
-        # Body Script Tree
-        self.script = []
-    
-    def parse(self, rawBlock, parent):
-        if parent.flags == 1280:
-            self.raw = decompress( rawBlock, parent.length )
-        else:
-            self.raw = rawBlock
         self.parseHeader( self.raw[:self.headerLen] )
         self.parseBody( self.raw[self.headerLen:] )
     
@@ -382,6 +383,10 @@ class ScriptBlock:
             val = int.from_bytes(raw,byteorder='little')
             self.info.append(val)
     
+    def printBlockInfo(self):
+        print( "-- -- SCRIPTBLOCK ", end='')
+        print( self.info )
+
     def checkKeyword(self, buff, kwds):
         strbuff = ''
         for c in buff:
