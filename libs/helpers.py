@@ -35,7 +35,6 @@ def printHex( hex ):
             asciiBuff = ''
     print('')
 
-# this doesn't print the last line properly but whatever
 def compHex( hex1, hex2 ):
     l1 = len(hex1)
     l2 = len(hex2)
@@ -44,7 +43,7 @@ def compHex( hex1, hex2 ):
     first = True
     print( f"Printing Hex1 ({l1}) & Hex2 ({l2})" )
     print( "0x0000 | ", end='')
-    for idx in range(1, max(l1,l2)):
+    for idx in range(1, l1+l2+32):
         if( first ):
             if( c1 < l1 ):
                 print( "%02X " % hex1[c1], end='')
@@ -55,7 +54,11 @@ def compHex( hex1, hex2 ):
             c1 += 1
         else:
             if( c2 < l2 ):
-                print( "%02X " % hex2[c2], end='')
+                if c2 < l1:
+                    s = ' ' if hex2[c2] == hex1[c2] else '.'
+                else:
+                    s = ' '
+                print( "%02X%s" % (hex2[c2],s), end='')
             else:
                 print( "   ", end='')
             if( c2%16 == 15 ):

@@ -3,7 +3,7 @@ from libs.blockDefs import *
 from autoTranslator import getTranslation
 import io
 
-blockNum = 374
+blockNum = 729
 
 with open("HBD1PS1D.Q41", "rb") as dq4b:
 
@@ -150,7 +150,10 @@ with open("HBD1PS1D.Q41", "rb") as dq4b:
 
                 comp = scb.compress( sb )
 
-                compHex( raw, comp )
+                # compHex( raw, comp )
+                scb = ScriptBlock()
+                scb.parse( comp, sb )
+                print( scb.info )
 
                 dataLeft -= ( sb.compLength )
             else:
