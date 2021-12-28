@@ -3,7 +3,7 @@ from libs.blockDefs import *
 from autoTranslator import getTranslation
 import io
 
-blockNum = 729
+blockNum = 374
 
 with open("HBD1PS1D.Q41", "rb") as dq4b:
 
@@ -32,13 +32,13 @@ with open("HBD1PS1D.Q41", "rb") as dq4b:
             bytesParsed -= 16
             numBlocks += int(bytesParsed/2048)
         #print( f"Num Blocks: {numBlocks}")
-        if numBlocks == blockNum:
-            b.printBlockInfo()
+        #b.printBlockInfo()
 
         # Calculate how much data is left based on sector size
         dataLeft = 2048 * b.sectors - 16
 
         # Read all the subblocks in the current block
+        types = []
         for j in range( b.numSubBlocks ):
             sbHeader = dq4b.read(16)
             dataLeft -= 16
@@ -46,21 +46,26 @@ with open("HBD1PS1D.Q41", "rb") as dq4b:
             sb.parseHeader(sbHeader)
             if numBlocks == blockNum:
                 sb.printBlockInfo()
+            if sb.type == 39 or sb.type == 40 or sb.type == 42:
+                types.append(sb.type)
             # Add to this blocks SubBlock data
             b.subBlocks.append(sb)
+        # if len(types) > 2:
+        #     print(f"NumBlocks {numBlocks} - {types}")
+        #     blockNum = numBlocks
 
         # Now we can go through the subblocks
         for sb in b.subBlocks:
             offset = 0
 
-            if (sb.type == 40 or sb.type == 42):
-                tbHeader = dq4b.read(24)
-                tb = TextBlock()
-                tb.parseHeader(tbHeader)
-                dq4b.seek(-24,1)
-                if tb.uuid == 0xEC:
-                    print( numBlocks )
-                    tb.printBlockInfo()
+            # if (sb.type == 40 or sb.type == 42):
+            #     tbHeader = dq4b.read(24)
+            #     tb = TextBlock()
+            #     tb.parseHeader(tbHeader)
+            #     dq4b.seek(-24,1)
+            #     if numBlocks == blockNum:
+            #         print( numBlocks )
+            #         tb.printBlockInfo()
 
             # If we have a textblock, make a new obj
             if numBlocks == blockNum and (sb.type == 40 or sb.type == 42):
@@ -134,12 +139,18 @@ with open("HBD1PS1D.Q41", "rb") as dq4b:
                 sb.printBlockInfo()
                 scb = ScriptBlock()
 
-                scb.parse( dq4b.read( sb.compLength ), sb )
+                raw = dq4b.read( sb.compLength )
+
+                scb.parse( raw, sb )
 
                 # scb.printScript()
 
                 print( scb.info )
-                scb.printScript()
+                #scb.printScript()
+
+                comp = scb.compress( sb )
+
+                compHex( raw, comp )
 
                 dataLeft -= ( sb.compLength )
             else:

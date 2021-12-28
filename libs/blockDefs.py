@@ -1,7 +1,7 @@
 from itertools import count
 from libs.huffman import *
 from libs.helpers import *
-from libs.lzs import decompress
+from libs.lzs import decompress, compress
 
 # Data Class for 2048 byte blocks
 class Block:
@@ -266,6 +266,8 @@ class ScriptBlock:
     def __init__(self, _id=0):
         self.headerLen = 92
 
+        self.raw = None
+
         self.opCodes = {
             'b401a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [0]  },
             'b401a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [0]  },
@@ -361,11 +363,17 @@ class ScriptBlock:
     
     def parse(self, rawBlock, parent):
         if parent.flags == 1280:
-            self.body = decompress( rawBlock, parent.length)
+            self.raw = decompress( rawBlock, parent.length )
         else:
-            self.body = rawBlock
-        self.parseHeader( self.body[:self.headerLen] )
-        self.parseBody( self.body[self.headerLen:] )
+            self.raw = rawBlock
+        self.parseHeader( self.raw[:self.headerLen] )
+        self.parseBody( self.raw[self.headerLen:] )
+    
+    def compress( self, parent ):
+        parent.length = len(self.raw)
+        comp = compress( self.raw )
+        parent.compLength = len(comp)
+        return comp
     
     def parseHeader(self, header):
         self.header = header # save the byte version
