@@ -63,32 +63,44 @@ def decompress( in_data, d_size ):
 
 def compress( in_data ):
 
-    # Starts its search at FF0, wrapping around when it can
-
+    # At a given index and position, just iterate through to see how long our match is
     def findMatch(buff, idx, data, pos):
         l = 0
         while True:
+            # length can't extend beyond the data we're trying to compress
             if (pos+l) >= len(data):
                 break
+            # length can't be greater than 18
             if l >= 0x12:
                 break
+            # buffer cycles at 4096, this allows us to
+            # use the beginning of the data with leading zeros if we need
             if buff[(idx+l)%0xFFF] == data[pos+l]:
                 l += 1
             else:
                 break
+        # if our match was less than two, then we failed
         if l < 3:
             return -1
         return l
 
+    # here's my best emulation of the algorithm heartbeat uses
     def findLongestMatch( data, pos ):
+        # "best" distance and length, start with a best of 2
         bdist = -1
         blen = 2
-        # Create a buffer with only the data we can access
+
+        # Create a 4096 buffer
         buffer = bytearray(4096)
+
+        # we need the data we've written plus some "lookahead"
+        # since occasionally we match to data we've already "written"
+        # I'm using just 18 bytes of lookahead and I'm pretty sure we could
+        # go shorter
         if pos < 0x12:
-            lookahead = pos
+            lookahead = pos # no lookahead in the first 18 bytes
         elif pos >= len(data)-0xF:
-            lookahead = len(data)
+            lookahead = len(data) # this is just to not break things
         else:
             lookahead = pos+0xF
         for i in range(0,lookahead):
@@ -96,12 +108,22 @@ def compress( in_data ):
                 buffer[i] = data[i]
 
         l = -1
+        # first we start by looking at the last 18 bytes of the buffer
+        # we go backwards so our best match will be the closest to the
+        # end as possible, which is how HeartBeat does it
+        # A really smart person will notice that this is actually the last 17 bytes
+        # and they'd be right, but for some reason HeartBeat does this too
         for i in range( 0xFFF, 0xFFF-0x12, -1):
+            # look for the longest match at the current pos
             l = findMatch(buffer,i,data,pos)
+            # if its better than the last, save it
             if l > blen:
                 bdist = i+1
                 blen = l
         
+        # now we can go through the data, from index 0 to our current pos
+        # same deal here tho, if we find a match and its longer than the last
+        # save it.
         idx = 0
         while idx < pos:
             l = findMatch(buffer,idx,data,pos)
@@ -119,8 +141,11 @@ def compress( in_data ):
     while idx < len(in_data):
         cbuf = 0
         dbuf = []
+        # We need to find 8 matches or raw bytes
         for i in range( 0, 8, 1 ):
+            # check to see if we can find a match at the current index
             match = findLongestMatch( in_data, idx )
+            # if we found something, our distance will not be -1
             if match[0] != -1:
                 # no need to do anything to cbuf, 0 already there :)
 
@@ -130,30 +155,15 @@ def compress( in_data ):
                 dbuf.append( b2 )
                 dbuf.append( b1 )
 
-                vals = []
-                for i in range(match[1]):
-                    vals.append( in_data[idx+i] )
-                print(f"0 - {idx} {match[0]} {match[1]} {b2:02X} {b1:02X} - {' '.join('%02X'%x for x in vals)}")
-
-                # print(f"\n[{b2:02X} {b1:02X}]", end=' ')
-                # for i in range(match[1]):
-                #     if match[0] < 0xF00:
-                #         print("%02X" % in_data[match[0]+i], end=' ')
-                #     else:
-                #         print("00", end=' ')
-                # print()
-
+                # skip however many bytes we found
                 idx += match[1]
             else:
                 cbuf |= 1 << i
                 try:
-                    print(f"1 - {in_data[idx]:02X}")
                     dbuf.append( in_data[idx] )
-                    # print( "%02X" % in_data[idx], end=' ')
                 except Exception as e:
-                    '''do nothing'''
+                    ''' do nothing '''
                 idx += 1
-        print("Block Done")
         comp.append(cbuf)
         [ comp.append(v) for v in dbuf ]
 
