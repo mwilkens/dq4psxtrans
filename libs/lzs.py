@@ -63,48 +63,47 @@ def decompress( in_data, d_size ):
 
 def compress( in_data ):
 
-    # probably the best way to do this would be to
-    # insert "data" into a 4096 byte buffer and perform the matching
-    # from there, this however works fine for what its worth
+    # Starts its search at FF0, wrapping around when it can
+
+    def findMatch(buff, idx, data, pos):
+        l = 0
+        while True:
+            if (pos+l) >= len(data):
+                break
+            if l >= 0x12:
+                break
+            if idx >= 0 and (idx+l) == pos:
+                break
+            if buff[(idx+l)%4096] == data[pos+l]:
+                l += 1
+            else:
+                break
+        if l < 3:
+            return -1
+        return l
+
     def findLongestMatch( data, pos ):
         bdist = -1
         blen = 2
+        # Create a buffer with only the data we can access
+        buffer = data[:pos] + bytearray(4096-pos)
 
-        if pos > len(data) - 8:
-            return (bdist, blen)
-
-        idx = 0
-        match = []
-        for d in data:
-            if idx == pos:
-                break
-
-            # First check in the data for a match
-            if d == data[pos]:
-                tidx = 1
-                stillMatched = True
-                while stillMatched and tidx < 0x12:
-                    if data[idx+tidx] != data[pos+tidx]:
-                        stillMatched = False
-                    else:
-                        tidx += 1
-                if tidx > blen:
-                    blen = tidx
+        l = -1
+        for i in range( 0xFFF, 0xFFF-0x12, -1):
+            l = findMatch(buffer,i,data,pos)
+            if l > blen:
+                bdist = i
+                blen = l
+        
+        if l < 0:
+            idx = 0
+            while idx < pos:
+                l = findMatch(buffer,idx,data,pos)
+                if l > blen:
                     bdist = idx
-            
-            # We should also check for zeros
-            if data[pos] == 0:
-                tidx = 1
-                stillMatched = True
-                while stillMatched and tidx < 0x12:
-                    if data[pos+tidx] != 0:
-                        stillMatched = False
-                    else:
-                        tidx += 1
-                if tidx > blen:
-                    blen = tidx
-                    bdist = 0xFFF - tidx + 1
-            idx += 1
+                    blen = l
+                idx += 1
+
         
         return (bdist, blen)
     
@@ -125,6 +124,11 @@ def compress( in_data ):
                 dbuf.append( b2 )
                 dbuf.append( b1 )
 
+                vals = []
+                for i in range(match[1]):
+                    vals.append( in_data[idx+i] )
+                print(f"0 - {idx} {match[0]} {match[1]} {b2:02X} {b1:02X} - {' '.join('%02X'%x for x in vals)}")
+
                 # print(f"\n[{b2:02X} {b1:02X}]", end=' ')
                 # for i in range(match[1]):
                 #     if match[0] < 0xF00:
@@ -137,17 +141,24 @@ def compress( in_data ):
             else:
                 cbuf |= 1 << i
                 try:
+                    print(f"1 - {in_data[idx]:02X}")
                     dbuf.append( in_data[idx] )
                     # print( "%02X" % in_data[idx], end=' ')
                 except Exception as e:
                     '''do nothing'''
                 idx += 1
+        print("Block Done")
         comp.append(cbuf)
         [ comp.append(v) for v in dbuf ]
 
     return comp
 
 '''
+
+FEB(0) vs. FEF(0)
+4093   vs. 4097
+FE7(4) vs. FF3(4)
+
 Compressed
 0x0000 | DF 7B 02 00 00 0C E7 F4 | F0 03 57 00 00 18 EB F0 | #{#..#####W..###
 0x0010 | 0E E3 F8 0D DF FC 7D 5C | EB F0 4C 04 00 00 AC 23 | ######}\##L#..##
@@ -168,41 +179,24 @@ Decompressed
 0x0060 | 00 C0 21 A0 C6 00 00 00 | B4 01 A0 E1 03 00 B3 02 | .#!##...#####.##
 
 ======================== ORIGINAL =============================================== MINE ===========================
-0x0000 | DF 7B 02 00 00 0C E7 F4 | F0 03 57 00 00 18 EB F0 | | DF 7B 02 00 00 0C E7 F4 | F0 03 57 00 00 18 EB F0 |
-0x0010 | 0E E3 F8 0D DF FC 7D 5C | EB F0 4C 04 00 00 AC 23 | | 0E E3 F8 0D DF FC 7D 5C | EB F0 4C 04 00 00 AC 23 |
-0x0020 | 00 D1 E4 27 04 31 0F E8 | F3 B1 EA F1 C0 21 FB A0 | | 00 D1 E4 27 04 DC.FF.E8 | F3 B1 EA F1 C0 21 FB A0 |
-0x0030 | C6 EB F0 B4 01 A0 E1 03 | EF 00 B3 02 01 EB F0 F4 | | C6 EB F0 B4 01 A0 E1 03 | EF 00 B3 02 01 EB F0 F4 |
-0x0040 | 21 A0 8A 5E 01 01 4E 01 | B9 53 0C 4F 00 5E 01 F1 | | 21 A0 8A 5E 01 01 4E 01 | B9 53 0C 4F 00 5E 01 F1 |
-0x0050 | DF 06 3A 00 00 B2 EA F1 | 43 43 F9 43 4A 05 81 04 | | DF 06 3A 00 00 B2 EA F1 | 43 43 F9 43 4A 05 81 04 |
-0x0060 | 03 00 B0 B0 B0 A4 8A 0F | 83 02 04 A2 0F 7F 06 05 | | 03 00 B0 B0 B0 A4 8A 0F | 83 02 04 A2 0F 7F 06 05 |
-0x0070 | BE 0F 21 53 A0 CD 6F 0F | 81 04 06 89 0E CF EF 0F | | A2.0F 21 53 A0 CD 6F 0F | 81 04 06 89 0E CF 6F.0F |
-0x0080 | 92 81 04 07 89 0F 82 03 | 08 DA 0A 2F 01 C0 7F 26 | | 92 81 04 07 89 0F 82 03 | 08 A2.0A 2F 01 C0 7F 26 |
-0x0090 | 78 FB 0C FE FF FF 5F 10 | 3D FC 4B 02 26 78 FD F4 | | 78 FB 0C FE FF FF 5F 10 | 3D FC 4B 02 26 78 FD F4 |
-0x00A0 | 5E 00 5F 10 FD FE EA F1 | C1 61 A1 B8 FB FF FF B4 | | 5E 00 5F 10 FD FE EA F1 | C1 61 A1 B8 FB FF FF B4 |
-0x00B0 | 01 A1 C0 61 A0 78 01 E4 | 56 00 4F 00 B4 5E 00 56 | | 01 A1 C0 61 A0 78 01 E4 | 56 00 4F 00 B4 5E 00 56 |
-0x00C0 | 02 02 B3 02 40 FB F0 4E | 01 EA F1 8D 13 F1 F1 8D | | 02 02 B3 02 40 FB F0 4E | 01 EA F1 8D 13 F1 F1 8D |
-0x00D0 | 13 37 94 1F 88 A6 18 23 | 00 8D 13 4A BB 1F D7 15 | | 13 37 94 1F 88 A6 18 23 | 00 8D 13 4A 94.1F D7 15 |
-0x00E0 | 89 17 A1 4E E2 1F F6 FF | FF 84 10 8F 11 B5 53 05 | | 89 17 A1 4E 94.1F F6 FF | FF 84 10 8F 11 B5 53 05 |
-0x00F0 | A7 01 B3 02 EF F0 4E 01 | 21 A7 16 CE 42 24 2F B4 | | A7 01 B3 02 EF F0 4E 01 | 21 A7 16 CE 42 24 2F B4 |
-0x0100 | 53 0C DB 01 2F 01 3B 18 | 5F 07 25 C6 77 05 16 78 | | 53 0C A3.01 2F 01 8F.08.| 5F 94.15.C6 77 05 16 78 |
-0x0110 | 8E 12 52 0F 64 02 0B 00 | 5E 88 15 E0 06 3D 07 77 | | 8E 12 52 0F 64 02 0B 00 | 5E 88 15 E0 06 3D 07 77 |
-0x0120 | 07 88 77 2D E2 89 17 7F | 07 25 2C 24 85 00 0D 00 | | 07 88 77 2D E2 89 17 7F | 94.15.2C 24 85 00 0D 00 |
-0x0130 | B0 42 7E 07 0A 35 1B DB | 00 CD 2F DF 29 11 7D 08 | | B0 42 7E 07 0A 89.0B.A3.| 00 CD 2F DF 29 11 7D 08 |
-0x0140 | 81 10 35 1E 36 25 89 17 | FE F1 BE 1C 81 04 14 80 | | 81 10 89.0E.36 25 89 17 | FE F1 97.1C 81 04 14 80 |
-0x0150 | DA 00 36 1B 89 17 87 00 | 26 2D EA F1 85 00 15 54 | | A2.00 8A.0B.89 17 87 00 | 26 2D EA F1 85 00 15 54 |
-0x0160 | 35 1C 89 10 03 F8 14 02 | F8 1B 39 8F 25 A7 03 B3 | | 89.0C.89 10 03 F8 14 02 | F8 1B 39 53.05.A7 03 B3 | 
-0x0170 | 02 5B 12 7F 06 16 35 1E | 1B 25 00 1B 25 1A FF 34 | | 02 5B 12 7F 06 16 89.0E.| 1B 25 00 1B 25 1A FF 34 |
-0x0180 | 89 17 38 D3 3C 85 00 BD | 17 DA 06 58 58 58 40 EB | | 89 17 38 D3 3C 85 00 BD | 17 A2.06 58 58 58 40 EB |
-0x0190 | F0 34 28 1F 01 42 40 1E | 01 78 EB F0 94 4C 01 EB | | F0 34 28 1F 01 42 40 1E | 01 78 EB F0 94 4C 01 EB |
-0x01A0 | F0 55 EC EB F0 08 5E 00 | 1C EF F0 B0 EF F0 51 70 | | F0 55 EC EB F0 08 5E 00 | 1C EF F0 B0 EF F0 51 70 |
-0x01B0 | EF F0 42 41 66 45 A4 EF | F0 EC EF F0 55 C0 67 44 | | EF F0 42 41 66 45 A4 EF | F0 EC EF F0 55 C0 67 44 |
-0x01C0 | E0 EF F0 2C FB F0 60 FB | F0 A5 A4 FB F0 E8 C6 11 | | E0 EF F0 2C FB F0 60 FB | F0 A5 A4 FB F0 E8 9F.11 |
-0x01D0 | EB F0 48 EB F0 64 2A EB | F0 80 EB F0 9C EB F0 C8 | | EB F0 48 EB F0 64 2A EB | F0 80 EB F0 9C EB F0 C8 |
-0x01E0 | 5F 01 EB F0 55 10 5E 00 | 24 EF F0 B8 EF F0 F4 EF | | 5F 01 EB F0 55 10 5E 00 | 24 EF F0 B8 EF F0 F4 EF |
-0x01F0 | F0 15 34 FB F0 68 FB F0 | AC FB F0 08 41 C6 41 84 | | F0 15 34 FB F0 68 FB F0 | AC FB F0 08 41 C6 41 64.|
-0x0200 | FE 31 CA 41 1C FF 30 CE | 41 EC F3 67 01 7B 25 02 | | FE 31 CA 41 1C FF 30 CE | 41 00.00.EE.F1.96.67.01.|
-0x0210 | 9E 41 02 ED F0 A2 41 03 | ED F0 A6 41 49 04 ED F0 | | 7B.02.9E.41.02.EB.40.A2.| 41.03.24.EB.40.A6.41.04.|
-0x0220 | AA 41 05 ED F0 AE 41 06 | ED F0 92 B2 41 07 ED F0 | | EB.40.AA.41.05.EB.40.AE.| 41.49.06.EB.40.B2.41.07.|
-0x0230 | BA 41 08 ED F0 BE 41 09 | 00 1B 51 ED 40 00 00 00 | | EB.40.BA.41.08.EB.40.FE.| BE.41.09.00.7B.02.F4.02.|
-0x0240 |                         |                         | | 00                      |                         |
+0x0000 | F5 B0 EB F0 04 E7 F4 A4 | 01 00 00 45 10 EB F0 0A | | F5 B0 EB F0 04 E7 F4 A4 | 01 00 00 45 10 EB F0 0A |
+0x0010 | E3 F8 02 09 EA F1 5C EA | F1 2F 02 00 00 40 23 00 | | E3 F8 02 09 03.01.5C 03.| 01.2F 02 00 00 40 23 00 |
+0x0020 | 68 27 04 31 0F BA E8 F3 | B1 EA F1 C0 21 A0 FB F0 | | 68 27 04 30.0F 7A.03.03.| B1 03.01.C0 21 A0 01.03.|
+0x0030 | 00 77 F1 06 3A EC F0 B0 | B0 B2 EA F1 97 43 43 43 | | 00 FF.F1 06 3A 00.00.B0 | B0 B0.5D.B2.03.01.43 43 |
+0x0040 | 4A 0C 01 5A 0F 50 06 02 | 74 76 0F 50 06 03 92 0F | | 43.4A.0C.01.5A.0F.D2.50.| 06.02.5A.0F.50.06.03.5A.|
+0x0050 | 21 A0 CD EB F0 FF B4 01 | A0 E1 03 00 B3 02 2C 52 | | 0F.21.A0.FD.CD.03.00.B4.| 01.A0.E1.03.00.B3.B3.02.|
+0x0060 | 01 4F 07 04 00 96 0D CF | C3 0F 52 04 E9 05 DD 0E | | 52.01.4F.07.04.00.5E.0D.| CF.A4.C3.0F.52.04.05.DD.|
+0x0070 | 52 04 06 AE 0F 21 A0 5F | 3C FB F0 F2 0A 16 78 01 | | 0E.52.04.06.5A.0F.21.F3.| A0.5F.52.00.C6.0A.16.78.|
+0x0080 | A0 23 10 4F 00 3D 88 37 | 1D 61 A0 78 01 F2 00 4F | | 01.A0.F4.5B.00 4F.00.88.| 37.1D.61.A0.78.01.74.C6.|
+0x0090 | 00 9D 7F 37 15 01 B3 02 | 2F 01 56 00 08 09 00 4D | | 00 4F.00.7F.37.15.01.B3.| 02.2F.01.26.56.00.08.00.|
+0x00A0 | 11 52 04 07 DD 0B 4B 11 | 62 1F 74 18 A5 0C 4E 08 | | 4D.11.52.04.07.DD.0B.4B.| 11.94.62.1F.74.18.0C.4E.|
+0x00B0 | 0B 09 1F 53 03 0F 22 16 | 58 57 58 58 14 EB F0 30 | | 08.0B.09.1F.53.03.0F.5E.| 5A.06.58 58 58.14.03.00.|
+0x00C0 | EB F0 4C EB F0 A5 68 EB | F0 94 4C 01 EB F0 DC EB | | 30.03.00.95.4C.03.00.68.| 03.00.94.4C.01.03.00.DC.|
+0x00D0 | F0 44 AA FB F0 04 FB F0 | 4C 12 20 38 FB F0 80 2A | | AA.03.00.44.52.00.04.52.| 00.4C.12.20.38.AA.52.00.|
+0x00E0 | FB F0 54 0F 24 74 FB F0 | 9C 52 01 EB F0 55 1C EB | | 80.52.00.54.0F.24.74.52.| 00.9C.54.52.01.03.00.1C.|
+0x00F0 | F0 38 EB F0 54 EB F0 70 | EB F0 15 9C EB F0 C8 EB | | 03.00.38.03.00.54.03.00.| 55.70.03.00.9C.03.00.C8.|
+0x0100 | F0 E4 F3 11 FB F0 51 11 | 06 EC F3 00 00 75 00 31 | | 03.00.E4.F3.11.00.52.00.| 51.11.59.00 03.02.75.00.|
+0x0110 | 22 91 00 35 22 AD 00 12 | 39 22 04 ED F0 3E 21 05 | | 31.22.91.00.35.22.24.AD.| 00.39.22.04.57.20.3E.21.|
+0x0120 | ED F0 42 21 21 10 42 45 | 22 07 ED F0 4A 21 7F 10 | | 05.57.20.42.21 84.21.10.| 45.22.07.57.20.4A.21.7F.|
+0x0130 | 4D 22 09 ED F0 00 52 21 |                         | | 10.4D.22.09.            |                         |
 '''

@@ -44,7 +44,7 @@ def parseBlock(block):
     dataOffset = block.numSubBlocks*16
     lengths = []
     for i in range(block.numSubBlocks):
-        sb = SubBlock(i)
+        sb = SubBlock(i+1) # no need to zero-index this
         sb.parseHeader( block.data[(i*16):((i+1)*16)] )
         off = dataOffset+sum(lengths)
         sb.data = block.data[off:off+sb.compLength]
