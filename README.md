@@ -15,13 +15,11 @@ My goal here is to get at least an accessible foundation for translation started
 * [WIP] Create script that guesses translation based on text similarity
 * [DONE] Write Huffman Encode Functionality
 * [WIP] Write Textblock Modification Functionality
-* ~~Calculate Pointer Mod Values~~
-* ~~[WIP] Write ASM Generator for Pointer Redirection~~
-* ~~Write Binary Patcher for SLPM_869.16~~
-* Figure out DQ scripting language structure
+* [WIP] Write Scriptblock Modification Functionality
+* [DONE] Figure out DQ scripting language structure
 * Actually patch all the dialog in DQ4 :)
 * [DONE] Write DQ LZS Decompression
-* Write DQ LZS Compression
+* [DONE] Write DQ LZS Compression
 * Extract all TIM Files
 * Write Patcher for TIM Files
 * Figure out where every other bit of dialog is

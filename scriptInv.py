@@ -3,7 +3,7 @@ from libs.helpers import *
 from libs.blockDefs import *
 import io
 
-select = 1127
+select = 26045#462
 
 if __name__ == '__main__':
     for b in parseHBD1('HBD1PS1D.Q41'):
@@ -12,11 +12,12 @@ if __name__ == '__main__':
                 b.printBlockInfo()
                 sb.printBlockInfo()
                 scb = ScriptBlock(sb)
-                old = scb.raw
-                comp = scb.compress( sb )
-                compHex( sb.data, comp )
-
+                oldraw = scb.raw
+                printHex(scb.raw)
+                #scb.replaceOffset( 0x6C, 0xF91, 0xF87 )
+                old = sb.data
+                comp = scb.compress()
+                compHex( old, comp )
                 sb.data = comp
-
                 scb = ScriptBlock(sb)
-                #compHex( old, scb.raw )
+                #compHex( oldraw, scb.raw )

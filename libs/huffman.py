@@ -47,6 +47,7 @@ def decodeHuffman( offset, code, huff ):
     tempTree = huff
     byte_idx = 0
     start = offset
+    startBit = 0
     for byte in code:
         # Count down from the end
         for i in range(8):
@@ -58,9 +59,11 @@ def decodeHuffman( offset, code, huff ):
             else:
                 dText = ''.join([dText,tempTree[code]])
                 if( tempTree[code] == '{0000}' ):
-                    dialog.append( {'text':dText,'offset':'0x%04X' % start} ) 
+                    bitOffset = start * 8 + startBit
+                    dialog.append( {'text':dText,'offset':'0x%04X' % bitOffset} ) 
                     dText = ""
                     start = byte_idx + offset
+                    startBit = i+1
                 tempTree = huff
         byte_idx += 1
     return dialog

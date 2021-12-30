@@ -10,14 +10,17 @@ class Block:
     _ids = count(0)
     def __init__(self, sb=0, s=0, l=0, zb=0):
         self.id = next(self._ids)
+        self.valid = True
         self.numSubBlocks = sb
         self.subBlocks = []
         self.sectors = s
         self.length = l
         self.zeroBytes = zb
+        self.header = 0
         self.data = 0
     
     def parseHeader(self, header):
+        self.header = header # save byte version
         header = int.from_bytes(header,byteorder='little')
         self.numSubBlocks = ( header & 0xFFFFFFFF )
         header = header >> 32
@@ -56,6 +59,15 @@ class SubBlock:
         self.flags = ( header & 0xFFFF )
         header = header >> 16
         self.type = ( header & 0xFFFF )
+
+    def recalculateHeader(self):
+        header = self.compLength
+        header |= self.length << (32*1)
+        header |= self.unknown << (32*2)
+        header |= self.flags << (32*3)
+        header |= self.type << (32*3 + 16)
+        return header
+
     
     def printBlockInfo(self):
         print( "-- SUBBLOCK #%02d: CL(%6d) L(%6d) U(%08X) F(%4d) T(%4d)" % \
@@ -70,6 +82,7 @@ class TextBlock:
     def __init__(self, subblock):
 
         self.id = subblock.id
+        self.parent = subblock
 
         self.header = subblock.data[:24]
         self.body = subblock.data # data is header + body
@@ -267,6 +280,7 @@ class TextBlock:
 class ScriptBlock:
     def __init__(self, subblock):
         self.headerLen = 92
+        self.parent = subblock
 
         self.raw = None
         self.header = None
@@ -278,10 +292,10 @@ class ScriptBlock:
         # Body Script Tree
         self.script = []
 
-        if subblock.flags == 1280:
-            self.raw = decompress( subblock.data, subblock.length )
+        if self.parent.flags == 1280:
+            self.raw = decompress( self.parent.data, self.parent.length )
         else:
-            self.raw = subblock.data
+            self.raw = self.parent.data
 
         self.opCodes = {
             'b401a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [0]  },
@@ -370,10 +384,11 @@ class ScriptBlock:
         self.parseHeader( self.raw[:self.headerLen] )
         self.parseBody( self.raw[self.headerLen:] )
     
-    def compress( self, parent ):
-        parent.length = len(self.raw)
+    def compress( self ):
+        self.parent.length = len(self.raw)
         comp = compress( self.raw )
-        parent.compLength = len(comp)
+        self.parent.compLength = len(comp)
+        self.parent.data = comp
         return comp
     
     def parseHeader(self, header):
@@ -386,7 +401,18 @@ class ScriptBlock:
     def printBlockInfo(self):
         print( "-- -- SCRIPTBLOCK ", end='')
         print( self.info )
-
+    
+    def replaceOffset(self, dialog, oldOff, newOff):
+        # example c021a0 0e0d c006
+        needle = bytearray([0xc0, 0x21, 0xa0,
+                            oldOff&0xFF, oldOff>>8,
+                            (dialog<<4)&0xFF, (dialog>>4) ])
+        new = bytearray([0xc0, 0x21, 0xa0,
+                            newOff&0xFF, newOff>>8,
+                            (dialog<<4)&0xFF, (dialog>>4) ])
+        
+        self.raw = self.raw.replace(needle,new)
+            
     def checkKeyword(self, buff, kwds):
         strbuff = ''
         for c in buff:

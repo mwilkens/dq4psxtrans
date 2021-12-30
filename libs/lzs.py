@@ -105,7 +105,7 @@ def compress( in_data ):
             lookahead = pos+0xF
         for i in range(0,lookahead):
             if i < len(data):
-                buffer[i] = data[i]
+                buffer[i%0xFFF] = data[i]
 
         l = -1
         # first we start by looking at the last 18 bytes of the buffer

@@ -18,10 +18,17 @@ if __name__ == '__main__':
 
 
 # Generators for Parsing Blocks
-def parseHBD1(filename):
+def parseHBD1(filename, yield_invalid=False):
     with open(filename, "rb") as dq4b:
         # Nothing useful to us in the first sector
-        dq4b.seek(0x800)
+        if yield_invalid:
+            b = Block()
+            b.valid = False
+            b.parseHeader(dq4b.read(16))
+            b.data = dq4b.read(2048-16)
+            yield b
+        else:
+            dq4b.seek(0x800)
 
         # 319,436,800 total bytes
         while dq4b:
@@ -29,10 +36,17 @@ def parseHBD1(filename):
             b.parseHeader(dq4b.read(16))
 
             if b.numSubBlocks > 1000 or b.zeroBytes != 0:
-                dq4b.read(2048-16)
+                b.data = dq4b.read(2048-16)
+                b.valid = False
+                if yield_invalid:
+                    yield b
                 continue
             
             if b.length == 0:
+                b.data = dq4b.read()
+                b.valid = False
+                if yield_invalid:
+                    yield b
                 break
 
             dataLeft = 2048 * b.sectors - 16

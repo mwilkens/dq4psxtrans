@@ -1,6 +1,7 @@
 # Script for Working With DQ4 Data
 from libs.blockDefs import *
 from libs.parsing import *
+from autoTranslator import getTranslation
 import io
 
 if __name__ == '__main__':
