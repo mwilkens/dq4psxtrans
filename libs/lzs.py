@@ -94,19 +94,17 @@ def compress( in_data, verbose=False ):
             if buffer[i] == data[pos]:
                 # thats a match, lets see how far it goes
                 l = 1
-                #print( f"{buffer[(i+l)%4096]:02X} == {lget(data,pos+l):02X}" ) if pos == 0x8B else ''
+                buffer[(pos)%4096] = lget(data,pos)
                 while buffer[(i+l)%4096] == lget(data,pos+l):
+                    buffer[(pos+l)%4096] = lget(data,pos+l)
                     l+=1
-                    #print( f"{buffer[(i+l)%4096]:02X} == {lget(data,pos+l):02X}" ) if pos == 0x8B else ''
                     if l>18:
                         l = 18
                         break
                 
                 if l > blen:
-                    #print("Match") if pos == 0x8B else ''
                     bdist = i
                     blen = l
-
         return (bdist,blen)
     
     idx = 0
@@ -117,6 +115,8 @@ def compress( in_data, verbose=False ):
         for i in range( 0, 8, 1 ):
             # make sure we aren't overprocessing data
             if idx >= len(in_data):
+                dbuf.append( 0x00 )
+                dbuf.append( 0x00 )
                 break
             # put current byte into the buffer
             buffer[idx%4096] = in_data[idx]
