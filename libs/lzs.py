@@ -2,7 +2,6 @@ import math
 from libs.helpers import printHex
 
 def decompress( in_data, d_size, verbose=False ):
-    print("Decompressing")
     buffer = bytearray(4096)
     maxOff = 4096
 
@@ -14,7 +13,6 @@ def decompress( in_data, d_size, verbose=False ):
 
     while( offComp < len(in_data) ):
         controlByte = in_data[offComp]
-        print( f"{controlByte:02X}", end=" ")
 
         offComp += 1
         fullBreak = False
@@ -73,7 +71,6 @@ def decompress( in_data, d_size, verbose=False ):
     return decomp
 
 def compress( in_data, verbose=False ):
-    print("\nCompressing")
 
     buffer = bytearray(4096)
     comp = bytearray()
@@ -149,7 +146,6 @@ def compress( in_data, verbose=False ):
                 print( f"1 - c - {in_data[idx]:02X}") if verbose else ''
                 idx += 1
         comp.append(cbuf)
-        print( f"{cbuf:02X}", end=" ")
         [ comp.append(v) for v in dbuf ]
 
     return comp

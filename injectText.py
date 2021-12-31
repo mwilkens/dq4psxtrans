@@ -11,13 +11,13 @@ if __name__ == '__main__':
                 for sb in parseBlock(b):
                     if sb.type == 40 or sb.type == 42:
                         tb = TextBlock(sb)
-                        tb.parse()
-                        validDialog = False
-                        for line in tb.decText:
-                            if "ダミー{7f0b}{0000}" in line["text"] or line["text"] == "{0000}":
-                                ''' bad sign if dialog is only these '''
-                            else:
-                                validDialog = True
+                        # tb.parse()
+                        # validDialog = False
+                        # for line in tb.decText:
+                        #     if "ダミー{7f0b}{0000}" in line["text"] or line["text"] == "{0000}":
+                        #         ''' bad sign if dialog is only these '''
+                        #     else:
+                        #         validDialog = True
 
                         # if validDialog:
                         #     with io.open( './jdialog/%04X.csv' % tb.uuid, mode="r", encoding="utf-8") as dcsv:
@@ -25,13 +25,22 @@ if __name__ == '__main__':
                         #         buffer = tb.encodeTranslation( ''.join(tdialog) )
                     if sb.type == 39:
                         scb = ScriptBlock(sb)
+                        # oldlen = sb.compLength
                         # for now just recompress
                         scb.compress()
                     subblocks.append(sb)
                 
+                # insert headers into new block
+                idx = 0
                 for sb in subblocks:
-                    sb.recalculateHeader()
+                    b.data = b.data[:idx] + sb.recalculateHeader() + b.data[idx+16:]
+                    idx += 16
+                
+                # insert bodies into new block
+                for sb in subblocks:
+                    b.data = b.data[:idx] + sb.data + b.data[idx+sb.compLength:]
+                    idx += sb.compLength
             
             # rewrite block
-            #fh.write( b.header )
-            #fh.write( b.data )
+            fh.write( b.header )
+            fh.write( b.data )

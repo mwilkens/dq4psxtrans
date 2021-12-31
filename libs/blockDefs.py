@@ -66,7 +66,7 @@ class SubBlock:
         header |= self.unknown << (32*2)
         header |= self.flags << (32*3)
         header |= self.type << (32*3 + 16)
-        return header
+        return header.to_bytes(16, byteorder='little')
 
     
     def printBlockInfo(self):

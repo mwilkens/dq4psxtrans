@@ -13,7 +13,8 @@ if __name__ == '__main__':
                 sb.printBlockInfo()
                 scb = ScriptBlock(sb)
                 oldraw = scb.raw
-                #scb.replaceOffset( 0x6C, 0xF91, 0xF87 )
+                scb.replaceOffset( 0x6C, 0xF91, 0xF87 )
                 old = sb.data
                 comp = scb.compress()
-                compHex( old, comp )
+                #compHex( old, comp )
+                compHex( oldraw, scb.raw )
