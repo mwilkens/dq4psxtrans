@@ -5,8 +5,10 @@ import io
 
 #select = 462
 
-select = 1127
-select = 26045
+select = 1128
+select = 26046
+#select = 1197
+#select = 465
 
 smax = 0
 smaxid = None
@@ -21,12 +23,13 @@ if __name__ == '__main__':
                 sb.printBlockInfo()
                 scb = ScriptBlock(sb)
                 oldraw = scb.raw
-                with open("%d-c.bin"%select, 'wb') as fh:
-                    fh.write(sb.data)
+                with open("%d.bin"%select, 'wb') as fh:
+                    fh.write(scb.raw)
                 #scb.replaceOffset( 0x6C, 0xF91, 0xF87 )
                 old = sb.data
                 comp = scb.compress()
                 compHex( old, comp )
+                printHex( oldraw )
                 #compHex( oldraw, scb.raw )
             if sb.type == 39:
                 if sb.compLength > smax:

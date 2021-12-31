@@ -9,7 +9,7 @@ class Block:
     headerLen = 16
     _ids = count(0)
     def __init__(self, sb=0, s=0, l=0, zb=0):
-        self.id = next(self._ids)
+        self.id = next(self._ids) + 1
         self.valid = True
         self.numSubBlocks = sb
         self.subBlocks = []

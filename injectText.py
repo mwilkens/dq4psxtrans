@@ -24,10 +24,14 @@ if __name__ == '__main__':
                         #         tdialog = [getTranslation(line) for line in dcsv]
                         #         buffer = tb.encodeTranslation( ''.join(tdialog) )
                     if sb.type == 39:
+                        sbbak = sb
                         scb = ScriptBlock(sb)
-                        # oldlen = sb.compLength
+                        oldlen = sb.compLength
                         # for now just recompress
                         scb.compress()
+                        if oldlen != sb.compLength:
+                            print(f"Uh oh!!!!! {b.id}")
+                            sb = sbbak
                     subblocks.append(sb)
                 
                 # insert headers into new block
