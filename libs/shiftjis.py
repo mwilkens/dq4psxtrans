@@ -1,4 +1,4 @@
-import io
+import codecs
 
 ShiftJISLookup = {}
 
@@ -7,6 +7,7 @@ asciiMap = {
   '{':0x816f,
   '}':0x8170,
   '.':0x8142,
+  ',':0x8141,
   '\'':0x8166,
   '?':0x8148,
   '!':0x8149
@@ -38,5 +39,11 @@ def decodeShiftJIS( sjis ):
     return ''
 
 def encodeShiftJIS( ascii ):
-  c = mapASCII( ascii ) - 0x8000
+  if ord(ascii) > 255:
+    return bytes(ascii, 'cp932')
+  try:
+    c = mapASCII( ascii ) - 0x8000
+  except Exception as e:
+    print(ascii)
+    raise
   return c.to_bytes(2,byteorder='little',signed=False)

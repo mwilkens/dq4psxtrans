@@ -201,10 +201,10 @@ class TextBlock:
         ## Structure: ##
         # 1. Header (24 Bytes)
         # 2. Huffman Code (hLen Bytes)
-        codeLen = length(encText)
+        codeLen = len(encText)
         # 3. E Section (10 Bytes)
         # 4. Huffman Tree (tLen Bytes)
-        encTree = length(encTree)
+        treeLen = len(encTree)
         # 5. D Section Header (28 Bytes)
         # 6. D1 Block (d1Len Bytes)
         # 7. D2 Block (d2Len Bytes)
@@ -224,13 +224,13 @@ class TextBlock:
         buffer.extend( new_a_off.to_bytes( 4, 'little' ) )
 
         # Dialog ID (4 bytes)
-        buffer.extend( self.uuid )
+        buffer.extend( self.uuid.to_bytes( 4, 'little' ) )
 
         # Huff C (4 bytes) (always 0x18)
-        buffer.extend( self.huff_c )
+        buffer.extend( self.huff_c.to_bytes( 4, 'little' ) )
 
         # Huff D (3 bytes) = A off - huff d
-        new_huff_d = new_huff_a - dLen
+        new_huff_d = new_a_off - dLen
         buffer.extend( new_huff_d.to_bytes( 4, 'little' ) )
 
         # Huff E (4 bytes) = header + code

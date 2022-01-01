@@ -21,7 +21,7 @@ if __name__ == '__main__':
                 if validDialog:
                     with io.open( './jdialog/%04X.csv' % tb.uuid, mode="w", encoding="utf-8") as dcsv:
                         for line in tb.decText:
-                            dcsv.write( "\"\"," + ",".join(line.values()) + "\n")
+                            dcsv.write( "|" + "|".join(line.values()) + "\n")
                 
                 # There are certain text blocks repeated over the coarse of the
                 # resource file. If you want to extract these individually

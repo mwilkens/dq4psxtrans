@@ -147,7 +147,7 @@ totalLines = 0
 poorMatches = 0
 noMatches = 0
 
-def getTranslation( line ):
+def getTranslation( line, files=None ):
     # Default Return Value
     translation = {'line':'', 'similarity':0, 'file':'', 'ids':[]}
 
@@ -163,7 +163,11 @@ def getTranslation( line ):
         if translation['file'] != '':
             searchFiles = [translation['file']]
         else:
-            searchFiles = mptFiles
+            if files == None:
+                # if we haven't limited our search range, then use all files
+                searchFiles = mptFiles
+            else:
+                searchFiles = files
 
         for mptDialog in searchFiles:
             # Get Japanese and English Scripts
@@ -201,6 +205,10 @@ def getTranslation( line ):
         translation['ids'].append( candidateId )
 
     translation['similarity'] = avgConfidence*100
+
+    # If we couldn't match a file, just return
+    if translation['file'] == '':
+        return translation
 
     # Load the matched file
     mpteScript = readMPTFile( './assets/msg/en/' + translation['file'] )
