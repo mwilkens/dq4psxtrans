@@ -1,5 +1,5 @@
 from libs.shiftjis import decodeShiftJIS, encodeShiftJIS
-from libs.helpers import printHex
+from libs.helpers import printHex, compHex
 
 def parseTree( switch, offset, curNode, bytes):
     index = curNode * 2 + ( offset if switch else 0 )
@@ -109,32 +109,35 @@ def createNode( ft, num ):
     return [ft,node]
 
 def bitStr2Bytes(s):
-    bStr = b''
-    byt = ''
-    for bit in s:
-        byt += bit
-        if len(byt) == 8:
-            bStr += bytes([int(byt[::-1],2)])
-            byt = ''
-    if byt != '':
-        byt = byt.ljust(8,'0')
-        bStr += bytes([int(byt[::-1],2)])
-    return bStr
+    l = int( len(s) / 8 + (0 if (len(s) % 8 == 0) else 1) )
+    while l % 4 != 0:
+        l += 1
+    
+    data = bytearray(l)
+    lh = len(s)
+
+    for i in range(0,lh,8):
+        bits = s[i:min(lh,i+8)]
+        while len(bits) != 8:
+            bits += '0'
+        v = int(bits[::-1],2)
+        data[int(i/8)] = v
+    return data
 
 def encTree( node, offset, tree, nodeNum=None ):
     # if we're the root node
     if nodeNum == None:
         nodeNum = [*node][0]
         node = node[nodeNum]
-        tree[-4] = nodeNum
-        tree[-3] = 0x80
+        tree[-4] = nodeNum&0xFF
+        tree[-3] = 0x80 | (nodeNum>>8)
     idx1 = nodeNum*2
     idx2 = nodeNum*2 + offset
 
     leafs = [*node]
     if type(node[leafs[0]]) == dict:
-        tree[idx1] = leafs[0]
-        tree[idx1+1] = 0x80
+        tree[idx1] = leafs[0]&0xFF
+        tree[idx1+1] = 0x80 | (leafs[0]>>8)
         tree = encTree( node[leafs[0]], offset, tree, nodeNum=leafs[0] )
     elif len(leafs[0]) == 4:
         tree[idx1] = int(leafs[0][2:],16)
@@ -145,8 +148,8 @@ def encTree( node, offset, tree, nodeNum=None ):
         tree[idx1+1] = val[1]
     if len(leafs) > 1:
         if type(node[leafs[1]]) == dict:
-            tree[idx2] = leafs[1]
-            tree[idx2+1] = 0x80
+            tree[idx2] = leafs[1]&0xFF
+            tree[idx2+1] = 0x80 | (leafs[1]>>8)
             tree = encTree( node[leafs[1]], offset, tree, nodeNum=leafs[1] )
         elif len(leafs[1]) == 4:
             tree[idx2] = int(leafs[1][2:],16)
@@ -180,21 +183,30 @@ def encodeHuffman( text ):
         return rt
     ft = unpack(ft)
 
+    # Create the encoded huffman tree
+    rootNode = [*ft][0] + 1
+    tree = encTree( ft, rootNode*2, bytearray(rootNode*4) ) + b'\x00\x00'
+
+    ## Test to see if this works
+    #test = makeHuffTree( tree )
+    #print(test)
+
     # Create codes for each character
     def traverse(branch, curCode):
         codeList = {}
         stem = [*branch]
         if type(stem[0]) == int:
-            codeList.update( traverse(branch[stem[0]],curCode + '0') )
+            codeList.update( traverse( branch[stem[0]], curCode+'0' ) )
         else:
             codeList[stem[0]] = curCode + '0'
 
         if type(stem[1]) == int:
-            codeList.update( traverse(branch[stem[1]],curCode + '1') )
+            codeList.update( traverse( branch[stem[1]], curCode+'1' ) )
         else:
             codeList[stem[1]] = curCode + '1'
         return codeList
     codeList = traverse( list(ft.values())[0], '' )
+    print(codeList)
     
     # Actually encode the string with our new codes
     huffmanStr = ''
@@ -213,12 +225,7 @@ def encodeHuffman( text ):
             ctrlBuff += char
             continue
         huffmanStr += codeList[char]
-        #print(f"{char} - {codeList[char]}")
     huffmanCode = bitStr2Bytes( huffmanStr )
-
-    # Create the encoded huffman tree
-    rootNode = [*ft][0] + 1
-    tree = encTree( ft, rootNode*2, bytearray(rootNode*4) ) + b'\x00\x00'
 
     return [huffmanCode, tree]
 

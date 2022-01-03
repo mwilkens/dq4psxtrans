@@ -199,19 +199,28 @@ class TextBlock:
         # Otherwise encode the text
         [encText, encTree] = encodeHuffman( translatedText )
 
+        #print("encText")
+        #printHex(encText)
+        #print("encTree")
+        #printHex(encTree)
+
         ## Structure: ##
         # 1. Header (24 Bytes)
-        # 2. Huffman Code (hLen Bytes)
+        # 2. Huffman Code (codeLen Bytes)
         codeLen = len(encText)
         # 3. E Section (10 Bytes)
-        # 4. Huffman Tree (tLen Bytes)
+        # 4. Huffman Tree (treeLen Bytes)
         treeLen = len(encTree)
         # 5. D Section Header (28 Bytes)
         # 6. D1 Block (d1Len Bytes)
         # 7. D2 Block (d2Len Bytes)
         dLen = (self.a_off - self.huff_d)
         # 8. Counter (4 bytes)
-        # 8. Everything else (counter*8 bytes)
+        # 9. Num End Blocks (4 bytes)
+        # 10. Everything else (counter*8 bytes)
+
+        if codeLen%4 != 0:
+            raise("Huffman code length not a multiple of 4")
 
         # Create the array
         buffer = bytearray()
@@ -271,9 +280,12 @@ class TextBlock:
         #######################
         if self.huff_d != 0:
             buffer.extend( self.d_a )
-        buffer.extend( self.a_off.to_bytes(4,'little') )
+        buffer.extend( new_a_off.to_bytes(4,'little') )
         buffer.extend( self.end_counter.to_bytes(4,'little') )
         buffer.extend( self.end_block)
+
+        self.parent.length = new_a_off + 8 + self.end_counter*8
+        self.parent.compLength = self.parent.length
 
         return buffer
 

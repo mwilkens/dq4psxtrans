@@ -53,6 +53,7 @@ if __name__ == '__main__':
                         for i in range(len(tb.decText)):
                             old = int( oldText[i]['offset'], 16 )
                             new = int( tb.decText[i]['offset'], 16 )
+                            print( f"{oldText[i]['offset']} - {tb.decText[i]['offset']}" )
                             offsetMap.append( (old,new) )
                     subblocks.append(sb)
                 
@@ -63,7 +64,6 @@ if __name__ == '__main__':
                             sbbak = sb.data
                             scb = ScriptBlock(sb)
                             # replace all the offsets
-                            print(offsetMap)
                             for off in offsetMap:
                                 scb.replaceOffset( dialogId, off[0], off[1] )
                             # recompress
@@ -94,5 +94,5 @@ if __name__ == '__main__':
             fh.write( b.data )
 
     # Create new ROM
-    os.replace('./HBD1PS1D.Q41.NEW', './Dragon Quest IV - Michibikareshi Mono Tachi (Japan)/HBD1PS1D.Q41')
-    os.system('.\psximager\psxbuild -c "Dragon Quest IV - Michibikareshi Mono Tachi (Japan).cat" DQ4_En.bin')
+    #os.replace('./HBD1PS1D.Q41.NEW', './Dragon Quest IV - Michibikareshi Mono Tachi (Japan)/HBD1PS1D.Q41')
+    #os.system('.\psximager\psxbuild -c "Dragon Quest IV - Michibikareshi Mono Tachi (Japan).cat" DQ4_En.bin')
