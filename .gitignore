@@ -3,9 +3,14 @@
 *.obb
 *.pdf
 *.bin
+*.cue
+*.sys
+*.cat
 *.tags
 assets/**
 jdialog/**
-HBD1PS1D.Q41
+quickbms/**
+HBD1PS1D.Q41*
 SLPM_869.16
 SYSTEM.CNF
+psximager/**
