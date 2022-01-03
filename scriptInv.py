@@ -17,9 +17,9 @@ totalNum = 0
 if __name__ == '__main__':
     for b in parseHBD1('HBD1PS1D.Q41'):
         for sb in parseBlock(b):
-            if b.id == select and sb.type == 39:
-                b.printBlockInfo()
-                sb.printBlockInfo()
+            if sb.type == 39:
+                #b.printBlockInfo()
+                #sb.printBlockInfo()
                 scb = ScriptBlock(sb)
                 if sb.flags == 1280:
                     oldraw = scb.raw
@@ -28,4 +28,5 @@ if __name__ == '__main__':
                     #scb.replaceOffset( 0x6C, 0xF91, 0xF87 )
                     old = sb.data
                     comp = scb.compress()
-                    compHex( old, comp )
+                    #compHex( old, comp )
+                    print( f"Old Len: {len(old)}\tNew Len: {len(comp)}")

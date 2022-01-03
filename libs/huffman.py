@@ -1,4 +1,3 @@
-
 from libs.shiftjis import decodeShiftJIS, encodeShiftJIS
 from libs.helpers import printHex
 
@@ -167,7 +166,7 @@ def encodeHuffman( text ):
     # Create nodes using min-heap
     nn = 0
     while len(ft) != 1:
-        [ft,nodes[nn]] = createNode(ft, nn)
+        ft, nodes[nn] = createNode(ft, nn)
         nn += 1
 
     # Building Huffman Tree (using recursion)
@@ -214,6 +213,7 @@ def encodeHuffman( text ):
             ctrlBuff += char
             continue
         huffmanStr += codeList[char]
+        #print(f"{char} - {codeList[char]}")
     huffmanCode = bitStr2Bytes( huffmanStr )
 
     # Create the encoded huffman tree
@@ -223,7 +223,7 @@ def encodeHuffman( text ):
     return [huffmanCode, tree]
 
 '''
-sampleText = "Ye can't turn me down like that! Please!{7f0a}{7f02}'Tis forbidden to enter into the castle at night.{0000}"
+sampleText = "{7f04}シンシアは　モシャスをとなえた！！{7f0b}{0000}Ye can't turn me down like that! Please!{7f0a}{7f02}'Tis forbidden to enter into the castle at night.{0000}"
 [encText, encTree] = encodeHuffman( sampleText )
 tree = makeHuffTree( encTree )
 text = decodeHuffman( 0, encText, tree )

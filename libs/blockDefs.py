@@ -8,9 +8,10 @@ class Block:
     #TODO: Add data offset
     headerLen = 16
     _ids = count(0)
-    def __init__(self, sb=0, s=0, l=0, zb=0):
-        self.id = next(self._ids) + 1
+    def __init__(self, _id, sb=0, s=0, l=0, zb=0):
+        self.id = _id
         self.valid = True
+        self.offset = 0
         self.numSubBlocks = sb
         self.subBlocks = []
         self.sectors = s
@@ -37,10 +38,10 @@ class Block:
     
 # Data Class for SubBlocks within Blocks
 class SubBlock:
-    #TODO: Add data offset
     headerLen = 16
     def __init__(self, _id=0):
         self.id = _id
+        self.offset = 0
         self.length = 0
         self.compLength = 0
         self.unknown = 0
@@ -385,11 +386,8 @@ class ScriptBlock:
         self.parseBody( self.raw[self.headerLen:] )
     
     def compress( self ):
-        self.parent.length = len(self.raw)
-        comp = compress( self.raw )
-        self.parent.compLength = len(comp)
-        self.parent.data = comp
-        return comp
+        self.body = compress( self.raw, self.parent.compLength )
+        return self.body
     
     def parseHeader(self, header):
         self.header = header # save the byte version
@@ -410,7 +408,6 @@ class ScriptBlock:
         new = bytearray([0xc0, 0x21, 0xa0,
                             newOff&0xFF, newOff>>8,
                             (dialog<<4)&0xFF, (dialog>>4) ])
-        
         self.raw = self.raw.replace(needle,new)
             
     def checkKeyword(self, buff, kwds):

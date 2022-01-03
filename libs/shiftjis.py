@@ -40,10 +40,7 @@ def decodeShiftJIS( sjis ):
 
 def encodeShiftJIS( ascii ):
   if ord(ascii) > 255:
-    return bytes(ascii, 'cp932')
-  try:
-    c = mapASCII( ascii ) - 0x8000
-  except Exception as e:
-    print(ascii)
-    raise
+    ch = int.from_bytes(bytearray(ascii,'cp932'),byteorder='big') - 0x8000
+    return ch.to_bytes(2,byteorder='little',signed=False)
+  c = mapASCII( ascii ) - 0x8000
   return c.to_bytes(2,byteorder='little',signed=False)
