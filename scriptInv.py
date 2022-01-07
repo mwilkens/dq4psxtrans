@@ -2,31 +2,23 @@ from libs.parsing import *
 from libs.helpers import *
 from libs.blockDefs import *
 import io
-import numpy as np
 
-select = 462
+select = 117
 
-#select = 1128
-select = 26046
-
-dmax = 0
-dmaxid = None
-totalDiff = 0
-totalNum = 0
+# script blocks
+# 39, 31
 
 if __name__ == '__main__':
     for b in parseHBD1('HBD1PS1D.Q41'):
+        b.printBlockInfo()
         for sb in parseBlock(b):
-            if sb.type == 39:
-                #b.printBlockInfo()
-                #sb.printBlockInfo()
+            if (sb.type == 40):
+                tb = TextBlock(sb)
+                tb.printBlockInfo()
+            if ('''sb.type == 39 or sb.type == 31 or ''' == True or sb.type == 44):
+                sb.printBlockInfo()
                 scb = ScriptBlock(sb)
-                if sb.flags == 1280:
-                    oldraw = scb.raw
-                    #with open("%d.bin"%select, 'wb') as fh:
-                    #    fh.write(scb.raw)
-                    #scb.replaceOffset( 0x6C, 0xF91, 0xF87 )
-                    old = sb.data
-                    comp = scb.compress()
-                    #compHex( old, comp )
-                    print( f"Old Len: {len(old)}\tNew Len: {len(comp)}")
+                
+                #for line in scb.script:
+                #    if line['name'] == 'c021a0' and line['data'][1] != bytearray(2):
+                #        print(line['raw'].hex())

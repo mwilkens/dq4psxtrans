@@ -1,6 +1,7 @@
 from itertools import count
 from libs.huffman import *
 from libs.helpers import *
+from libs.shiftjis import decodeShiftJIS
 from libs.lzs import decompress, compress
 
 # Data Class for 2048 byte blocks
@@ -101,7 +102,10 @@ class TextBlock:
         self.one = 0
         self.d1_off = 0
         self.d2_off = 0
+        self.d1len = 0
+        self.d2len = 0
         self.d_var = [0,0,0,0,0,0]
+        self.d1_pages = []
 
         # Decoded Outputs of the TextBlock
         self.hufftree = []
@@ -131,16 +135,19 @@ class TextBlock:
         dheader = dheader >> 32
         self.d2_off = ( dheader & 0xFFFFFFFF )
         dheader = dheader >> 32
-        # 6 vars come after
-        for i in range(6):
+        self.d_entries = ( dheader & 0xFFFF )
+        dheader = dheader >> 16
+
+        # 5 vars come after
+        for i in range(5):
             self.d_var[i] = ( dheader & 0xFFFF )
             dheader = dheader >> 16
     
     def printDHeader(self):
-        print("-- -- -- D BLOCK O(%08X) D1(%08X) D2(%08X) DV[%04X,%04X,%04X,%04X,%04X,%04X]" % ( \
-            self.one, self.d1_off, self.d2_off, \
-            self.d_var[0],self.d_var[1],self.d_var[2],self.d_var[3],self.d_var[4],self.d_var[5]) )
-        print( "D1 Length: %04X, D2 Length: %04X" % (self.d2_off - self.d1_off, self.a_off - self.d2_off ))
+        print("-- -- -- D BLOCK O(%08X) D1(%08X) D2(%08X) DE[%04X] DV[%04X,%04X,%04X,%04X,%04X]" % ( \
+            self.one, self.d1_off, self.d2_off, self.d_entries, \
+            self.d_var[0],self.d_var[1],self.d_var[2],self.d_var[3],self.d_var[4]) )
+        print( "D1 Length: %04X, D2 Length: %04X" % (self.d1len, self.d2len ))
 
     def parse( self ):
         # Calculate A, this will be the same as a_off if everything worked right :)
@@ -160,8 +167,11 @@ class TextBlock:
             # If we do have d, we can extract this range, not sure what it is though
             self.d_a = byteSlice( self.body, self.huff_d, self.a_off, decode=False )
             self.dheader = byteRead( self.body, self.huff_d, 28 )
+
+            self.d1len = self.d2_off - self.d1_off
+            self.d2len = self.a_off - self.d2_off
+
             self.parseDHeader( self.dheader )
-            #self.printDHeader()
 
             self.d1 = byteSlice( self.body, self.d1_off, self.d2_off, decode=False )
             self.d2 = byteSlice( self.body, self.d2_off, self.a_off, decode=False )
@@ -171,6 +181,73 @@ class TextBlock:
                 printHex( self.d1 )
                 print("D2 Block")
                 printHex( self.d2 )'''
+
+            if self.d_var[2] > 0:
+                idx = 0
+                self.d1_offs = []
+                for doff in range(self.d_entries):
+                    o = int.from_bytes( self.d1[idx:idx+2], byteorder='little' )
+                    self.d1_offs.append( o )
+                    idx+=2
+
+                idx = self.d1_offs[0]
+                if idx == 0:
+                    idx = 4
+                self.d1_pages = []
+                total_entries = 0
+                page = []
+                while True:
+                    ent = self.d1[idx:idx+8]
+                    if ent == bytearray(8):
+                        if total_entries == self.d_var[2]:
+                            self.d1_pages.append(page)
+                            break
+                        else:
+                            self.d1_pages.append(page)
+                            page = []
+                            idx+=8
+                            continue
+                    dent = {
+                        'offset': int.from_bytes(self.d1[idx:idx+4],byteorder='little'),
+                        'value': decodeShiftJIS(int.from_bytes(self.d1[idx+4:idx+6],byteorder='little')),
+                        'flag1': int.from_bytes(self.d1[idx+6:idx+7],byteorder='little'),
+                        'flag2': int.from_bytes(self.d1[idx+7:idx+8],byteorder='little')
+                    }
+                    page.append( dent )
+                    total_entries += 1
+                    idx+=8
+                for p in self.d1_pages:
+                    last_o = -1
+                    for e in p:
+                        # Make sure pages have offsets that are strictly decreasing
+                        if last_o != -1 and last_o < e['offset']:
+                            raise("ENTRY NOT DECREASING")
+                        
+                        # Make sure offsets are always less than d2len*4
+                        if e['offset'] > (self.d2len*4):
+                            raise("D1 OFFSET TOO BIG")
+                        
+                        # Make sure value is always valid shift-jis
+                        if e['value'] == '':
+                            raise("D1 VALUE NOT VALID SHIFTJIS")
+
+                        if e['flag1'] < 5 or e['flag2'] < 8:
+                            print(e['flag1'])
+                            print(e['flag2'])
+                            raise("FLAG LESS THAN THRESH")
+                        
+                        if e['flag1'] > 13 or e['flag2'] > 14:
+                            print(e['flag1'])
+                            print(e['flag2'])
+                            raise("FLAG GREATER THAN THRESH")
+
+                        # This one is not true
+                        # if e['flag1'] > e['flag2']:
+                        #     print(e['flag1'])
+                        #     print(e['flag2'])
+                        #     raise("FLAG1 GREATER THAN FLAG2")
+                        
+                        last_o = e['offset']
         
         # Read to the end of the block
         self.end_counter = byteRead( self.body, self.a_off+4, 4 )
@@ -185,6 +262,12 @@ class TextBlock:
         #print( "a:%02X, e's: [%04X,%04X,%02X], htlen:%04X, edlen:%04X" %
         #    (self.a[0], self.e1, self.e2, self.e3, len(self.encHuffTree), len(self.encData)) )
     
+    def printDBlockPages(self):
+        for p in self.d1_pages:
+            print("==========NEW PAGE============")
+            for e in p:
+                print("%d\t%s\t%d\t%d" % (e['offset'],e['value'],e['flag1'],e['flag2']))
+
     def printBlockInfo(self):
         print( "-- -- TEXTBLOCK #%08X: A(%08X) HC(%08X) HE(%08X) HD(%08X) Z(%08X)" % \
             (self.uuid, self.a_off, \
@@ -313,37 +396,49 @@ class ScriptBlock:
         self.opCodes = {
             'b401a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [0]  },
             'b401a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [0]  },
+            'b501a3': {'name': '', 'raw': None, 'data': [], 'dataLen': [0]  },
 
-            'c01678': {'name': '', 'raw': None, 'data': [], 'dataLen': [1]  },
+            'c01678': {'name': '', 'raw': None, 'data': [], 'dataLen': [2]  },
             'c01639': {'name': '', 'raw': None, 'data': [], 'dataLen': [1]  }, # followed by a0
             'c0163b': {'name': '', 'raw': None, 'data': [], 'dataLen': [2]  }, # followed by a0
             'c0167b': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,1]  }, # followed by a0
             'c021a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
+            'c021a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
+            'c021a2': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
             'c021a3': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
             'c02678': {'name': '', 'raw': None, 'data': [], 'dataLen': [1,1,1,2] },
             'c02639': {'name': '', 'raw': None, 'data': [], 'dataLen': [3] },
-            'c0263b': {'name': '', 'raw': None, 'data': [], 'dataLen': [4] },
-            'c0267b': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2,3] },
+            'c0263b': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
+            'c0267b': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,3,2] },
             'c026bb': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,3,3] },
             'c061a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
+            'c061a2': {'name': '', 'raw': None, 'data': [], 'dataLen': [3] },            
             'c061a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] }, # really not sure about this
             'c161a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [3] },
             'c211a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] }, # followed by a0
             'c21678': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] }, # followed by a0
             'c221a1': {'name': '', 'raw': None, 'data': [], 'dataLen': [4] },
+            'c2263b': {'name': '', 'raw': None, 'data': [], 'dataLen': [3,3] },
             'c22678': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,3] },
             'c261a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
             'c30db0': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] },
             'c31678': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] }, # followed by a0
-            'c321a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,4,2,1] },
+            'c321a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
             'c361a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
+            'c40639': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] },
+            'c4063b': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
             'c40678': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] },
+            'c50678': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] },
             'c611a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] },
             'c661a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
+            'c711a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] },
             'c821a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
             'c921a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
 
             'd021a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
+            'd02678': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,3] },
+            'd061a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
+            'd22678': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,3] },
 
             'e0063d': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
             'e01bc0': {'name': '', 'raw': None, 'data': [], 'dataLen': [9] }, # very weird one
@@ -360,19 +455,36 @@ class ScriptBlock:
             'e2050a': {'name': '', 'raw': None, 'data': [], 'dataLen': [1,2] },
             'e2050e': {'name': '', 'raw': None, 'data': [], 'dataLen': [1,2] },
 
+            'f0063a': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
             'f1063a': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
+            'f20639': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] },
+            'f20679': {'name': '', 'raw': None, 'data': [], 'dataLen': [2] },
             'f321a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
+            'f361a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
             'f421a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
             'f461a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
-            'f511a3': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
+            'f511a3': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,1] },
+            'f51678': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
             'f521a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
             'f561a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
-            'f711a3': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
+            'f711a3': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,1] },
+            'f71678': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
             'f721a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [4,2] },
             'f761a0': {'name': '', 'raw': None, 'data': [], 'dataLen': [2,2] },
 
-            '434343': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
-            '585858': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+#b206000000 88da93 ae0a00 88da93 ae8f49 97b90a 00 434343
+#c0263b 0200 9005 0400 c0267b 0200 049405 0400 c021a0 9b05 0400
+#b208000000 534e44 5f5341435f535f 5a41 5a41 0a00 434343
+#b200000000 73636c 5f636d6d6e5f73616d706c655f3030 0a00
+
+            # I don't think these commands are real
+            '636e74': {'name': '', 'raw': None, 'data': [], 'dataLen': [3,2] },
+            '88da93': {'name': '', 'raw': None, 'data': [], 'dataLen': [3] },
+            '97b90a': {'name': '', 'raw': None, 'data': [], 'dataLen': [1] },
+
+            # These seem more structural than anything else
+            #'434343': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            #'585858': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
         }
 
         self.keywords = {
@@ -391,11 +503,13 @@ class ScriptBlock:
             '2000': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
             '3000': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
             'ffff': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            '43': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
+            '58': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] },
             '00': {'name': '', 'raw': None, 'data': [], 'dataLen': [0] }
         }
 
         self.parseHeader( self.raw[:self.headerLen] )
-        self.parseBody( self.raw[self.headerLen:] )
+        self.failed_comm = self.parseBody( self.raw[self.headerLen:] )
     
     def compress( self ):
         self.body = compress( self.raw, self.parent.compLength )
@@ -420,7 +534,11 @@ class ScriptBlock:
         new = bytearray([0xc0, 0x21, 0xa0,
                             newOff&0xFF, newOff>>8,
                             (dialog<<4)&0xFF, (dialog>>4) ])
+        if self.raw.find(needle) == -1:
+            print("Cannot find offset %04X for dialog %04X" % (oldOff, dialog))
+            return False
         self.raw = self.raw.replace(needle,new)
+        return True
             
     def checkKeyword(self, buff, kwds):
         strbuff = ''
@@ -482,8 +600,8 @@ class ScriptBlock:
 
                         # This is usually the end
                         # for now I'll just end things here
-                        #if opc == '585858':
-                        #    return
+                        if opc == '585858':
+                            return ''
                         
                         entry['name'] = opc
                         entry['data'] = []
@@ -497,14 +615,18 @@ class ScriptBlock:
                             fill = True
                         buff = []
                     else:
-                        #print( f"Invalid OpCode: {opc}", end='')
-                        #print( f" Following Bytes {body[offset-18:offset+18].hex()}")
-                        return
+                        if '0000' not in opc and '0100' not in opc and '0200' not in opc:
+                            print( f"Invalid OpCode: {opc}", end='')
+                            print( f" Following Bytes {body[offset-8:offset-2].hex()}",end=' ')
+                            print( f"{body[offset-2:offset+1].hex()}",end=' ')
+                            print( f"{body[offset+1:offset+24].hex()}")
+                            return opc
+                        return ''
                         buff = []
                 if len(buff) > 3:
                     buff = []
                     print( f"Something went wrong: {buff}", end='')
-                    return
+                    return ''
             # Here we'll fill the data
             else:
                 entry['raw'].append( x )
@@ -520,22 +642,54 @@ class ScriptBlock:
                     filledBytes = 0
                     fill = False
             offset += 1
+        return ''
+    
+    def makeArgTable( self, command, init=None ):
+        freqTable = []
 
-    def printScript( self ):
+        '''
+        [ {'1FF':1,'17F':4}, {'0':100,...etc} ]
+        '''
+
+        if init == None:
+            # create a dictionary for each argument
+            for i in range(len(self.opCodes[command]['dataLen'])):
+                freqTable.append({})
+        else:
+            freqTable=init
+
+        for entry in self.script:
+            if entry['name'] == command:
+                for idx,e in enumerate(entry['data']):
+                    arg = f"({int.from_bytes(e,byteorder='little'):X})"
+                    if arg in freqTable[idx]:
+                        freqTable[idx][arg] += 1
+                    else:
+                        freqTable[idx][arg] = 1
+        return freqTable
+
+    def printScript( self, quiet=False ):
         indentLevel = 0
+        script = ''
         for entry in self.script:
             if entry['name'] == 'b2':
                 indentLevel -= 2
             elif entry['name'] == 'b3':
                 indentLevel -= 1
             for i in range(indentLevel):
-                print('\t',end='')
-            print(entry['name'], end='')
+                script += '\t'
+            script += entry['name']
             for e in entry['data']:
-                print( f" ({int.from_bytes(e,byteorder='little'):X})", end='' )
-            print(f" - {entry['raw'].hex()}")
+                script += f"({int.from_bytes(e,byteorder='little'):X})"
+            script += f" - {entry['raw'].hex()}\n"
             if entry['name'] == 'b1':
                 indentLevel += 2
             elif entry['name'] == 'b3':
                 indentLevel += 1
             entry = None
+        
+        # print unless specifically asked not to
+        if not quiet:
+            print(script)
+        
+        return script

@@ -206,7 +206,6 @@ def encodeHuffman( text ):
             codeList[stem[1]] = curCode + '1'
         return codeList
     codeList = traverse( list(ft.values())[0], '' )
-    print(codeList)
     
     # Actually encode the string with our new codes
     huffmanStr = ''

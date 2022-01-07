@@ -1,4 +1,6 @@
-# D Section - Probably not useful!!
+# D Section
+
+The D section exists in blocks of type 46 as well.
 
 The D section is very interesting. First of all, it only exists when the "one" value of the text block header is 1, otherwise there's no d-block. The begining of the D section is a header that's 28 bytes long. 
 
@@ -14,9 +16,16 @@ The D section is very interesting. First of all, it only exists when the "one" v
 | 0x14 | 4 | Always 0x10 |
 | 0x16 | 4 | Always 0x10 |
 
-The first data section (D1 Block) looks very structured. Every bit in the 0x07, 0x08, 0x0E and 0x0F position is zero. It nearly always ends in 8 bytes of padding. Using the 4th value of the d section header, we can read a list of offsets which gradually increase. The first offset is where the data starts, and if we account for the 16 bytes of termination, we can count the number of 8-byte (or 32-bit) entries which have a similar structure. The 7th entry of the d section header is exactly the number of entries if the 4th value is 2. It is slightly less otherwise. The offsets always correspond to an area of all 0's in the section.
+The first data section (D1 Block) starts with a series of 2-byte integers which is listed in the header. These integers are zero padded to fit in a structure with length divisible by 8. The integers are offsets to the "pages" in the d1 block. Each page consists of 8-byte entries. From what I can tell they look like this:
 
-The D1 block can be parsed partially by reading the starting offsets one by one and extracting the data in each block. Each subblock of the D1 block is further seperated into "entries" which contain a 4-byte integer and a 4-byte chunk of data. Each subblock is padded with 8-bytes of zeros. The 4-byte integers of each entry gradually decends until it finally reaches zero. The other bit of information is interesting and likely represents some kind of instruction. A large chunk of them begin with 0x0D0C. It is possible that the 4-byte integers represent bit level offsets in the D2 block, however since the sections of D1 have counters that start over, I have reason to suspect that.
+| Offset | Length | Comment |
+| ----- | ------ | ------- |
+| 0x00 | 4 | Some sort of offset |
+| 0x04 | 2 | A number, always in the kanji range for shift-jis |
+| 0x06 | 1 | Some sort of flag, usually 12 |
+| 0x07 | 1 | Some sort of flag, usually 13 |
+
+The offsets are gradually decreasing, and never exceed the length of d2*4, although they get very close. I suspect that this means they're 2-bit offsets.
 
 The second section (D2 Block) is fairly random. Consistently there seem to be a lot of occurances of 0x55, but that could be coincidence.
 
