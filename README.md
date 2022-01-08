@@ -300,6 +300,14 @@ While I'm not entirely sure how this works, it seems that the F-type commands ar
 The F-type commands have a second argument that have unique (usually increasing) values throughout the script.
 I suspect these are goto operations.
 
+The `C021A0` command has lots of uses, but the two most particularly relevant to us are:
+* `C021A0 <offset> <dialogId>`
+* `C021A0 <FFF0> <???>`
+
+Both of these display dialog to the screen, the second form seems to be related to type 26 blocks. Not sure how yet.
+
+`C02678` commands perform character movement during cutscenes.
+
 ## Credits
 
 This effort is based on the work of Markus Schroeder, I hardly take credit for this, I just love Dragon Quest and want to see this game translated.

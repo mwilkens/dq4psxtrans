@@ -1,6 +1,7 @@
 from libs.parsing import *
 from libs.helpers import *
 from libs.blockDefs import *
+from libs.lzs import *
 from autoTranslator import getTranslation, readMPTFile
 import io
 import re
@@ -12,7 +13,7 @@ from os import walk
 # 1. Get android dialog match(s) for each scene
 # 2. Get huffman offsets for translated text
 
-select = 26058
+select = 606
 
 # block 259 has a VERY short d-block
 
@@ -20,7 +21,25 @@ if __name__ == '__main__':
     for b in parseHBD1('HBD1PS1D.Q41'):
         for sb in parseBlock(b):
             offsetMap = []
-            if (sb.type == 40 or sb.type == 42):
+            if b.id == select and sb.type == 46:
+                sb.printBlockInfo()
+                fsb = SubBlock(-1)
+                fsb.id = -1
+                decomp = decompress( sb.data, sb.length )
+                fsb.data = decomp[0x4550:0x65C7]
+                fsb.length = len(fsb.data)
+                fsb.compLength = len(fsb.data)
+                fsb.unknown = 0
+                fsb.type = 40
+                fsb.header = fsb.recalculateHeader()
+                tb = TextBlock(fsb)
+                tb.parse()
+                tb.printBlockInfo()
+                print("First line of decoded text:")
+                print(tb.decText[0])
+                tb.printDHeader()
+                tb.printDBlockPages()
+            if b.id == select and (sb.type == 40 or sb.type == 42):
                 b.printBlockInfo()
                 sb.printBlockInfo()
                 tb = TextBlock(sb)
