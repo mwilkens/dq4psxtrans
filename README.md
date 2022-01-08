@@ -306,6 +306,8 @@ The `C021A0` command has lots of uses, but the two most particularly relevant to
 
 Both of these display dialog to the screen, the second form seems to be related to type 26 blocks. Not sure how yet.
 
+Some of my investigation notes can be found [here](notes/dialog_offsets.md)
+
 `C02678` commands perform character movement during cutscenes.
 
 ## Credits
