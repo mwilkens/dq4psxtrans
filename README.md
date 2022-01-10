@@ -302,13 +302,19 @@ I suspect these are goto operations.
 
 The `C021A0` command has lots of uses, but the two most particularly relevant to us are:
 * `C021A0 <offset> <dialogId>`
-* `C021A0 <FFF0> <???>`
+* `C021A0 <FFF0> <key>`
 
-Both of these display dialog to the screen, the second form seems to be related to type 26 blocks. Not sure how yet.
+Both of these display dialog to the screen, the second form uses a key which can be searched using a lookup table at the end of type-40 and type-42 blocks. This key is also found in several other blocks, which likely accounts for other NPC dialog.
 
 Some of my investigation notes can be found [here](notes/dialog_offsets.md)
 
 `C02678` commands perform character movement during cutscenes.
+
+## Useful Breakpoints for Debuggers
+
+| Breakpoint | Where it works |
+| ---------- | -------------- |
+| 0x8008EBA4 | Normal NPC Dialog |
 
 ## Credits
 

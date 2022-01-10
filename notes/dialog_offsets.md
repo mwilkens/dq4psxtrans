@@ -1,17 +1,17 @@
 ## Dialog Locations
 
-| Scene | Block ID | Dialog ID | Dialog Lines | Script Offsets | Notes |
-| ----- | -------- | --------- | ------------ | -------------- | ----- |
-| Hidden Valley Underground      | 26046 | 0x006C | 11 | 11 | Yes/No Dialog |
-| Hidden Valley Town             | 26051 | 0x0067 | 13 | 13 | Yes/No Dialog |
-| Hidden Valley Upper Right Home | 26050 | 0x0068 | 2  | 2  | Just two guys |
-| Hidden Valley Inn              | 26053 | 0x0065 | 1  | 1  | Just one guy |
-| Hidden Valley Hero's Home      | 26049 | 0x0069 | 13 | 13 | Mom places food on table, tons of movement, End of scene |
-| Burland Castle                 | 596   | 0x0392 | 36 | 56 | Probably more than one script here since we come back later |
-| Burland Castle Kings Chamber   | 597   | 0x0393 | 5  | 10 |
-| Burland Castle Upper Floor     | 598   | 0x004C | 3  | 3  |
-| Burland Castle Outside         | 599   | 0x039C | 6  | 9  | Only two guards out here |
-| Burland Town                   | 604   | 0x0390 | 16 | 53 |
+| Scene | Block ID | Dialog ID | Dialog Lines | Script Offsets | Type-26 Offsets | Notes |
+| ----- | -------- | --------- | ------------ | -------------- | --------------- | ----- |
+| Hidden Valley Underground      | 26046 | 0x006C | 11 | 11 | 0 | Yes/No Dialog |
+| Hidden Valley Town             | 26051 | 0x0067 | 13 | 13 | 0 | Yes/No Dialog |
+| Hidden Valley Upper Right Home | 26050 | 0x0068 | 2  | 2  | 0 | Just two guys |
+| Hidden Valley Inn              | 26053 | 0x0065 | 1  | 1  | 0 | Just one guy |
+| Hidden Valley Hero's Home      | 26049 | 0x0069 | 13 | 13 | 0 | Mom places food on table, tons of movement, End of scene |
+| Burland Castle                 | 596   | 0x0392 | 56 | 34 | 2 | Probably more than one script here since we come back later |
+| Burland Castle Kings Chamber   | 597   | 0x0393 | 10 | 5  | 2 | Inaccessible at night |
+| Burland Castle Upper Floor     | 598   | 0x004C | 3  | 3  | 0 | One guy, all accounted for |
+| Burland Castle Outside         | 599   | 0x039C | 6  | 9  | 0 | Only two guards out here |
+| Burland Town                   | 604   | 0x0390 | 53 | 16 | 4 |
 
 ## Burland Castle Notes
 

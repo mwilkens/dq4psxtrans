@@ -529,13 +529,13 @@ class ScriptBlock:
     def replaceOffset(self, dialog, oldOff, newOff):
         # example c021a0 0e0d c006
         needle = bytearray([0xc0, 0x21, 0xa0,
-                            oldOff&0xFF, oldOff>>8,
+                            oldOff&0xFF, (oldOff>>8)&0xFF,
                             (dialog<<4)&0xFF, (dialog>>4) ])
         new = bytearray([0xc0, 0x21, 0xa0,
-                            newOff&0xFF, newOff>>8,
+                            newOff&0xFF, (newOff>>8)&0xFF,
                             (dialog<<4)&0xFF, (dialog>>4) ])
         if self.raw.find(needle) == -1:
-            print("Cannot find offset %04X for dialog %04X" % (oldOff, dialog))
+            #print("Cannot find offset %04X for dialog %04X" % (oldOff, dialog))
             return False
         self.raw = self.raw.replace(needle,new)
         return True
