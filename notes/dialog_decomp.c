@@ -114,48 +114,38 @@ void fun_800250F8(){
 	
 	if r17 != 0x0B0 {
 		script_addr += 1
-		if r17 != 0x0B1 & r17 != 0x0B2 {
-			r2 = r3 + 0x4F
-			goto 80025180
+		if r17 == 0x0B1 || r17 == 0x0B2 {
+			// Process b-type command
+			r2 = *(script_addr+0)
+			r3 = *(script_addr+1)
+			r4 = *(script_addr+2)
+			r5 = *(script_addr+3)
+			script_addr += 4
+			r2 = r2 | r3 << 8 | r4 << 16 | r5 << 24
+			*(r16+0x0F8) = r2
+			goto 8002520C
 		}
-		// Process b-type command
-		r2 = *(script_addr+0)
-		r3 = *(script_addr+1)
-		r4 = *(script_addr+2)
-		r5 = *(script_addr+3)
-		script_addr += 4
-		r3 = r3 << 8
-		r2 = r2 | r3
-		r4 = r4 << 16
-		r2 = r2 | r4
-		r5 = r5 << 24
-		r2 = r2 | r5
-		*(r16+0x0F8) = r2
-		goto 8002520C
 		
-		// 80025180
-		r2 = r2 & 0x0FF // 0x10F
-		// r2 = 0xF at this point
-		if r2 >= 0x48 {
+		// At this point our opcode should be something thats not B0-B3
+		r2 = r3 + 0x4F & 0x0FF // 0x10F
+		r4 = r18
+		if r2 >= 0x48 { // This will be true only if our opcode is outside of the range b1-f9
 			r2 = 0
 			goto 80025210
-		} else {
-			r4 = r18
 		}
 		r3 = *script_addr // r3 = 0x21 now
 		script_addr += 1
 		r5 = r18 + 0x0F4 // not sure what this is doing
-		*(r16+0xCC) = script_addr
 		r2 = r3 & 0xF // r2 = 1
-		r3 = r3 & 0xFF
-		r3 = r3 >> 4 // r3 = 2
-		*(r16+0xF0) = r2
-		*(r16+0x100) = r3
-		// ok so at this point we have this around r16
+		r3 = (r3 & 0xFF) >> 4 // r3 = 2
+			
 		// at 0xCC we have a pointer to the last portion of the opcode
 		// at 0xF0 we have the "1" from 0x21
-		// not sure when this happened but also this
 		// at 0x100 we have the "2" from 0x21
+		*(r16+0xCC) = script_addr
+		*(r16+0xF0) = r2
+		*(r16+0x100) = r3
+		
 		fun_80024CF4()
 		
 		r4 = r18
@@ -163,6 +153,7 @@ void fun_800250F8(){
 		// This time around we're looking at the
 		// First argument
 		fun_80024CF4()
+		
 		*(r16+0xCC) = r2
 		script_addr = r2
 		if r17 >= 0xF3 {
@@ -202,19 +193,22 @@ void fun_80024CF4(){
 	// pointer
 	r4 = *(r4+0x118) // 80018F3F0
 	
-	if r3==0 {
+	if r3==0 { // no remaining opcode bytes
 		*r8 = 0
 		goto 800250F0
-	} else if r3 == 1 {
+	} else if r3 == 1 { // only 1 remaining op-code byte
 		r6 = *r7 // A0
+			
+		// This checks if we've got an A*
 		r3 = r6 - 0xA0
 		if r3 < 0x0A {
-			r7 += 1
+			r7 += 1 // r7 is now the first argument
 			r2 = 0x80018D58
 			r3 = r3 << 2
 			r3 += r2
 			r2 = *r3 // r2 = 80024D58
 			// r2 will be an address, this is for clarity
+			// I'm not sure about these case numbers, they need to be checked
 			switch( r3 ) {
 				case 0:
 					r4 = r5 + 0xD4
@@ -237,17 +231,16 @@ void fun_80024CF4(){
 		}
 		
 		// 800024D94
+		// r6 will still be A0 at this point
 		r2 = r6 + 0x5A // r2 = FA
 		r2 = r2 & 0xFF
-		if r2 > 2 {
+		if r2 >= 2 { // This only won't be true if r6 is A6 or A7 (never seen?)
 			r3 = r6 & 0xFF
 			r2 = 0xA9
-			if r3 == r2 {
+			if r3 == 0xA9 || r3 == 0xA8 {
 				r2 = 1 
 				goto 800250EC
-			}
-			r2 = 0xA8
-			if r3 != r2 {
+			} else {
 				goto 800250E8
 			}
 		} else {
@@ -255,54 +248,52 @@ void fun_80024CF4(){
 		}
 		r2 = 1
 		goto 800250EC
-	} else if r3 == 2 {
+	} else if r3 == 2 { // Means there's 4 remaining op-code bytes
 		r3 = *(r7+0)
 		r4 = *(r7+1)
 		r5 = *(r7+2)
 		r6 = *(r7+3)
 		r7 += 4
+			
 		r2 = r8 + 0x0C
 		*r8 = r2
 		r2 = 0x7
 		*(r8+8) = r2
 		goto 80024E78
-	} else if r3 == 3 {
+	} else if r3 == 3 { // Means there's 1 remaining op-code bytes
 		r3 = *r7
 		r7 += 1
-		r2 = r8 + 0x0C
+			
+		r2 = r8 + 0x0C // r3 is stored where r2 points to
 		*r8 = r2
 		*(r8+0x8) = r6
 		*(r8+0x0C) = r3
 		goto 800250F0
-	} else if r3 == 4 {
+	} else if r3 == 4 { // Means there's 2 remaining op-code bytes, (2-byte int)
 		r4 = *(r7+0)
 		r3 = *(r7+1)
 		r7 += 2
-		r2 = r8 + 0x0C
+		r4 = r4 | r3 << 8
+		
+		r2 = r8 + 0x0C // r3 is stored where r2 points to
 		*r8 = r2
 		*(r8+8) = r9
-		r3 = r3 << 8
-		r4 = r4 | r3
 		*(r8+0xC) = r4
 		goto 800250F0
-	} else if r3 == 5 {
+	} else if r3 == 5 { // Means there's 4 remaining op-code bytes (4-byte int)
 		r3 = *(r7+0)
 		r4 = *(r7+1)
 		r5 = *(r7+2)
 		r6 = *(r7+3)
 		r7 += 4
-		r2 = r8 + 0x0C
+		r3 = r3 | r4 << 8 | r5 << 16 | r6 << 24
+		
+		r2 = r8 + 0x0C // r3 is stored where r2 points to
 		*r8 = r2
 		*(r8+8) = r10
-		r4 = r4 << 8
-		r3 = r3 | r4
-		r5 = r5 << 16
-		r3 = r3 | r5
-		r6 = r6 << 24
-		r3 = r3 | r6
 		*(r8+0xC) = r3
 		goto 800250F0
-	} else if r3 == 6 {
+	} else if r3 == 6 { // Similar to 1
 		r14 = *r7
 		r2 = r14 & 0x7
 		if r2 == 0 {
