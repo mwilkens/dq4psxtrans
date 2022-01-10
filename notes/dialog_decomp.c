@@ -156,11 +156,13 @@ void fun_800250F8(){
 		// at 0xF0 we have the "1" from 0x21
 		// not sure when this happened but also this
 		// at 0x100 we have the "2" from 0x21
-		fun_80024C54()
+		fun_80024CF4()
 		
 		r4 = r18
 		r5 = r4 + 0x104
-		fun_80024C54()
+		// This time around we're looking at the
+		// First argument
+		fun_80024CF4()
 		*(r16+0xCC) = r2
 		script_addr = r2
 		if r17 >= 0xF3 {
@@ -184,54 +186,60 @@ void fun_800250F8(){
 }
 
 //80024C54
-void fun_80024C54(){
+void fun_80024CF4(){
 	r8 = r5 //r5 is 800F9234
 	r5 = r4 + 0x8 // r4 is 800F9140
 	
-	r7 = *(r5+0xCC) // 
-	r3 = *(r8+0x4)  //
-	r4 = *(r4+0x118) //
+	// This is the current location of
+	// the script pointer
+	r7 = *(r5+0xCC) // 8018FB9F
+
+	// This is the 1 in "21" (second byte of opcode)
+	r3 = *(r8+0x4)  // 01
+
+	// I think this is the variables before
+	// the script, "7E" is the value at the current
+	// pointer
+	r4 = *(r4+0x118) // 80018F3F0
 	
 	if r3==0 {
 		*r8 = 0
 		goto 800250F0
 	} else if r3 == 1 {
-		r6 = *r7
+		r6 = *r7 // A0
 		r3 = r6 - 0xA0
-		r2 = r3 < 0xA
-		if r2 != 0 {
+		if r3 < 0x0A {
 			r7 += 1
-			r2 = *(80018D58)
+			r2 = 0x80018D58
 			r3 = r3 << 2
 			r3 += r2
-			r2 = *r3
+			r2 = *r3 // r2 = 80024D58
 			// r2 will be an address, this is for clarity
-			switch( r2 ?? ) {
-				case 1:
+			switch( r3 ) {
+				case 0:
 					r4 = r5 + 0xD4
 					break;
-				case 2:
+				case 1:
 					r4 = r5 + 0xD5
 					break;
-				case 3:
+				case 2:
 					r4 = r5 + 0xE0
 					break;
-				case 4:
+				case 3:
 					r4 = r5 + 0xE4
 					break;
-				case 5:
+				case 4:
 					r4 = r5 + 0xE8
 					break;
 				default:
-					r2 = 0
+					r4 = 0
 			}
 		}
 		
 		// 800024D94
-		r2 = r6 + 0x5A
+		r2 = r6 + 0x5A // r2 = FA
 		r2 = r2 & 0xFF
-		r2 = r2 < 2
-		if r2 == 0 {
+		if r2 > 2 {
 			r3 = r6 & 0xFF
 			r2 = 0xA9
 			if r3 == r2 {
