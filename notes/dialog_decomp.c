@@ -365,18 +365,18 @@ void fun_80024CF4(){
 			r7 += 4
 		}
 		
-		r2 = r14 & 0x7
+		r2 = r14 & 0x7 // 3A&07 = 2
 		if r2 == 0 {
 			r2 = *r8
 			r2 += r3
 			goto 80025080
 		} else {
-			r3 = r13 << 2
-		} // 80025074
-		r2 = *r8
-		r2 += r13
+			r3 = r13 << 2 // in our example r13 is zero
+			r2 = *r8
+			r2 += r13
+		}
 		
-		// 80025080
+		
 		r3 = r14 & 0x38
 		if r3 == 0 {
 			*(r8+0x8) = 0
@@ -410,6 +410,7 @@ void fun_80024CF4(){
 			default:
 				return
 		}
+
 		// 800250EC
 		*(r8+8) = r2
 	}
