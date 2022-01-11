@@ -168,7 +168,7 @@ void fun_800250F8(){
 			r2 = r2 | r3 << 8
 			r2 = r2 << 16
 			r3 = *(r19+0x34)
-			r2 = r2 ??? 0x0E // sar
+			r2 = r2 >> 0x0E
 			r2 = r2 + r3
 			r2 = r2[0]
 			script_addr += 2
@@ -276,129 +276,93 @@ void fun_80024CF4(){
 		r7 += 4
 		goto 800250F0 // maybe return *r7
 	} else if r3 == 6 { // example: f10(6)3a0800
+
+		// Nearly everything here is determined
+		// by the next bit of op-codes (i.e. 3A in this example)
 		r14 = r7[0] // 3A in our example
 		r2 = r14 & 0x7 // first three bits, so 3A&7 = 2
 		r7 += 1
+
+		// This portion sets up a value at r8[0]
 		if r2 == 0 {
 			// This would be 12 bytes before the current opcode
 			r8[0] = *(r5+0xC4)
-			goto 80024FD8
-		}
-		
-		if r2 == r6 { // I think r6 = 1
-			r6 = *r7
-			r3 = r6 - 0xA0
-			if r3 < 0x0A {
-				r2 = 80018D80
-				r3 = r3 << 2
-				r3 += r2
-				r2 = *r3
-				switch( r2 ?? ) {
-					case 1:
-						r2 = r5 + 0xD4
-						break;
-					case 2:
-						r2 = r5 + 0xD5
-						break;
-					case 3:
-						r2 = r5 + 0xE0
-						break;
-					case 4:
-						r2 = r5 + 0xE4
-						break;
-					case 5:
-						r2 = r5 + 0xE8
-						break;
-					default:
-						r2 = 0
-				}
-			} else {
-				r7 += 1
+		} else if r2 == 1 {
+			r6 = r7[0]
+			r7 += 1
+			// This is based on ghidra output so I'm not sure
+			// Looks like it grabs an address at a location around r5
+			switch (r6) {
+				case 'A0':
+				case 'A6':
+					r2 = r5 + 0xD4
+					break;
+				case 'A7':
+					r2 = r5 + 0xD5
+					break;
+				case 'A1':
+					r2 = r5 + 0xD8
+					break
+				case 'A2':
+				case 'A9':
+					r2 = r5 + 0xDC
+				case 'A3':
+				case 'A8':
+					r2 = r5 + 0xE0
+					break;
+				case 'A4':
+					r2 = r5 + 0xE4
+					break;
+				case 'A5':
+					r2 = r5 + 0xE8
+					break;
+				default:
+					r2 = 0
 			}
-			r2 = *r2
-			*r8 = r2
-			goto 80024FD8
+			r2 = *r2 // resolve the address
+			r8[0] = r2
 		}
-		if r2 == r9 {
-			r3 = *(r7+1)
-			r2 = *(r7+0)
-			r3 = r3 << 8
-			r2 = r2 | r3
-			r3 = *(r4+0x34)
+		// For these values we grab some info from the script vars
+		else if (r2 == 2 || r2 == 3 || r2 == 5) {
+			r2 = r7[0] | r7[1] << 8
 			r2 = r2 << 16
-			goto 80024FC4
-		}
-		if r2 == r10 {
-			r3 = *(r7+1)
-			r2 = *(r7+0)
-			r3 = r3 << 8
-			r2 = r2 | r3
-			r3 = *(r4+0x3C)
-			r2 = r2 << 16
-			goto 80024FC4
-		} // 80024F90
-		if r2 == r12 {
 			r7 += 2
-			*r8 = 0
-			goto 80024FD8
-		}
-		if r2 == r11 {
-			r3 = *(r7+1)
-			r2 = *(r7+0)
-			r3 = r3 << 8
-			r2 = r2 | r3
-			r3 = *(r4+0x38)
-			r2 = r2 sar 0x0E
+
+			if r2 == 2 {
+				r3 = *(r4+0x34)
+			}
+			else if r2 == 3 {
+				r3 = *(r4+0x3C)
+			}
+			else if r2 == 5 {
+				r3 = *(r4+0x38)
+			}
+
+			r2 = r2 >> 0x0E
 			r2 += r3
 			r2 = *r2
-			r7 += 2
 			*r8 = r2
-			// 80024FD8
-			r3 = r14 & 0x0C0
-		} else {
-			r3 = r14 & 0x0C0
 		}
+		else if r2 == 4 {
+			r7 += 2 // lmao just ignore the next two bytes who cares
+			*r8 = 0
+		}
+
+		// This code sets up r13
+		r3 = r14 & 0x0C0 // 3A&C0 = 0 
 		if r3 == 0 {
 			r13 = 0
-			goto 8002505C
-			// 800250E8
-			r2 = 7
-		} else {
-			r2 = 0x40
-		} //80024FEC
-		if r3 == r2 {
-			r13 = *r7
+		} else if r3 == 0x40 {
+			r13 = r7[0]
 			r7 += 1
-			goto 8002505C
-		} else {
-			r2 = 0x80
-		}
-		
-		if r3 == r2 {
-			r3 = *(r7+0)
-			r2 = *(r7+1)
+		} else if r3 == 0x80 {
+			r3 = r7[0] | r7[1] << 8
+			r3 = r3 << 16
 			r7 += 2
-			r2 = r2 << 8
-			r3 = r3 | r2
-			r3 = r3 << 16
-			r13 = r3 sar 0x10
-			goto 8002505C
-		} else {
-			r2 = 0xC0
-		}
-		
-		if r3 == r2 {
-			r4 = *(r7+0)
-			r2 = *(r7+1)
-			r3 = *(r7+2)
-			r5 = *(r7+3)
+			r13 = r3 >> 16
+		} else if r3 == 0xC0 {
+			r4 = r7[0] | r7[1] << 8 | r7[2] << 16 | r7[3] << 24
 			r7 += 4
-			r2 = r2 << 8
-			r4 = r4 | r2
-			r3 = r3 << 16
-			r4 = r4 | r3
-			r5 = r5 << 24
-			r4 = r4 | r5
 		}
 		
 		r2 = r14 & 0x7
